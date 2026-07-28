@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Work"
+  short_description: "Implement an SCV plan, test it, and archive safely"
+  default_prompt: "Use $scv:work to implement and verify the selected SCV promote plan."
+
+policy:
+  allow_implicit_invocation: false

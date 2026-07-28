@@ -1,0 +1,48 @@
+{
+  "name": "scv",
+  "version": "0.19.2-codex.1",
+  "description": "SCV (Standard · Cowork · Verify) for Codex. Turn every change into an approved plan and executable tests, then accumulate those tests into a durable regression suite.",
+  "author": {
+    "name": "wookiya1364",
+    "email": "wookiya1364@gmail.com",
+    "url": "https://github.com/wookiya1364"
+  },
+  "homepage": "https://github.com/wookiya1364/scv-codex",
+  "repository": "https://github.com/wookiya1364/scv-codex",
+  "license": "MIT",
+  "keywords": [
+    "scv",
+    "standard",
+    "cowork",
+    "verify",
+    "workflow",
+    "planning",
+    "testing",
+    "regression",
+    "multi-repo",
+    "slack",
+    "discord"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SCV",
+    "shortDescription": "Plan, implement, verify, and retain every change",
+    "longDescription": "SCV gives Codex a process-first team workflow: refine raw material into PLAN.md and TESTS.md, implement with verification, archive approved work, and continuously run the accumulated regression suite. It also supports PR evidence, Slack or Discord reporting, HTML planning decks, and nested multi-repository coordination.",
+    "developerName": "wookiya1364",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/wookiya1364/scv-codex",
+    "defaultPrompt": [
+      "Use SCV help to diagnose this project and tell me what to do next.",
+      "Promote my raw notes into an implementation plan and executable tests.",
+      "Run the accumulated SCV regression suite and triage any failures."
+    ],
+    "brandColor": "#F2C94C",
+    "composerIcon": "./assets/scv-circle.png",
+    "logo": "./assets/scv-circle.png"
+  }
+}
