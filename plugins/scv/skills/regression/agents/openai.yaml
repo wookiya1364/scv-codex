@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Regression"
+  short_description: "Run and triage accumulated archived SCV tests"
+  default_prompt: "Use $scv:regression to run the accumulated SCV regression suite."
+
+policy:
+  allow_implicit_invocation: false

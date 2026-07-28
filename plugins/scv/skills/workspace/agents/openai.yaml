@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Workspace"
+  short_description: "Configure a single or multi-repository SCV workspace"
+  default_prompt: "Use $scv:workspace to configure this repository in an SCV workspace."
+
+policy:
+  allow_implicit_invocation: false
