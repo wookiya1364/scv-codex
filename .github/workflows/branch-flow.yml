@@ -13,9 +13,9 @@ jobs:
   check-branch-flow:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Enforce branch flow
         env:
           TARGET_BRANCH: ${{ github.base_ref }}
           SOURCE_BRANCH: ${{ github.head_ref }}
-        run: sh plugins/scv/scripts/check-branch-flow.sh
+        run: sh plugins/scv/vendor/scv-core/core/scripts/check-branch-flow.sh
