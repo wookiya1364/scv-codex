@@ -36,5 +36,9 @@ DeckUI/dist/
 demo/node_modules/
 demo/out/
 
+# Preserve ignored local output from the pre-core DeckUI location. The shipped
+# DeckUI source now lives only under vendor/scv-core/core/DeckUI.
+/DeckUI/
+
 # $scv:help local conversation drafts
 /scv/.conversations/

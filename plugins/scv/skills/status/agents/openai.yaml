@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:status to show the current SCV workflow status."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

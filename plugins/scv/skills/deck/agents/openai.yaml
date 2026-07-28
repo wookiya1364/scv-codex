@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:deck to turn this Markdown plan into a polished HTML document."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true
