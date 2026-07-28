@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:handoff to create or manage a cross-repository development handoff."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

@@ -6,8 +6,7 @@ description: "Create, inspect, claim, adopt, or complete cross-repository SCV ha
 # SCV Handoff
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/handoff.md` completely.
+2. Read `../../vendor/scv-core/core/protocols/handoff.md` completely.
 3. Detect workspace mode and handoff state before mutation.
 4. Obtain consent separately for remote push and team notification whenever
    the protocol requires it.
-

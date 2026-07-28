@@ -8,14 +8,15 @@
 
 ## Tests
 
+- [ ] `bash tools/verify-core.sh` green
 - [ ] `bash plugins/scv/tests/test-codex-plugin.sh` green
-- [ ] `bash plugins/scv/tests/run-dry.sh` green
-- [ ] relevant `plugins/scv/tests/test-*.sh` green
+- [ ] `bash plugins/scv/vendor/scv-core/core/tests/run-dry.sh` green
+- [ ] relevant wrapper and vendored-core `test-*.sh` green
 - [ ] relevant scenario / regression updated
 
-## Deck (only if `$scv:deck` / `plugins/scv/DeckUI` touched)
+## Deck (only if `$scv:deck` / vendored `core/DeckUI` touched)
 
-- [ ] `pnpm -C plugins/scv/DeckUI typecheck` + `build:deck` green
+- [ ] `pnpm -C plugins/scv/vendor/scv-core/core/DeckUI typecheck` + `build:deck` green
 
 ## Checklist
 

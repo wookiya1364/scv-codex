@@ -6,8 +6,7 @@ description: "Report an SCV phase or regression result to the configured Slack o
 # SCV Report
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/report.md` completely.
+2. Read `../../vendor/scv-core/core/protocols/report.md` completely.
 3. Preview the destination, message, and artifacts before an external send
    unless the user already gave explicit send authorization.
 4. Preserve dry-run and retry-queue behavior.
-
