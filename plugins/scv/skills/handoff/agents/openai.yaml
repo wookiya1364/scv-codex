@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Handoff"
+  short_description: "Create and manage cross-repository SCV handoffs"
+  default_prompt: "Use $scv:handoff to create or manage a cross-repository development handoff."
+
+policy:
+  allow_implicit_invocation: false
