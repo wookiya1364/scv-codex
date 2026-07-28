@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:help to inspect this project and recommend the next SCV action."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

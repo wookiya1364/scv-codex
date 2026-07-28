@@ -2,6 +2,57 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.20.1-codex.1] — 2026-07-28
+
+### Changed — shared SCV Core
+
+- 공통 protocol, Bash helper, project template, DeckUI, asset, test를 별도
+  `scv-core` payload로 추출하고 Codex plugin에는 고정·검증한
+  `plugins/scv/vendor/scv-core/` 사본을 포함. 설치 또는 runtime에는
+  network fetch가 없으며 plugin cache만으로 동작.
+- Codex wrapper는 14개 skill, host profile/runtime mapping, update,
+  model-policy compatibility, state migration shim만 소유. `update`와
+  `set-models` 외 action은 core catalog와 protocol을 직접 사용.
+- 모든 skill의 implicit invocation을 활성화. 자연어 요청이 기본이며
+  `$scv:<name>`은 정확한 skill을 고르는 선택적 selector로 유지.
+  `/scv:<name>`은 Codex plugin invocation이 아님.
+
+### Versioning and supply chain
+
+- Codex wrapper `VERSION`, core `VERSION`, project `TEMPLATE_VERSION`을
+  독립적으로 추적하고 `CORE_API`/`ADAPTER_API` 호환성을 검증.
+- `core.lock.json`에 source commit, source/payload checksum과 release
+  vendoring 시 실제 tarball의 `artifact_sha256`을 기록.
+- `tools/vendor-core.sh`는 local checkout 또는 checksum이 검증된 immutable
+  release를 atomic하게 vendor하고, `tools/verify-core.sh`는 lock,
+  manifest, checksums, API, 14-action/skill contract를 검증.
+- release archive와 materialized vendor에는 일반 파일과 디렉터리만
+  허용. symlink, hardlink, FIFO/device 같은 special file은 추출·교체 전에
+  거부하며 기존 vendor가 byte-for-byte 유지되는 원자성 회귀로 잠금.
+- 주기/수동 core check는 `chore/core-*` → `develop` PR만 만들며 자동
+  merge나 `stage`/`main` 승격은 하지 않음. `scv-core-released`
+  repository-dispatch도 지원하고, 기본 `GITHUB_TOKEN`으로 PR 생성이 제한된
+  저장소는 선택적 `SCV_CORE_SYNC_TOKEN` secret을 사용할 수 있음.
+
+### Compatibility
+
+- canonical project index를 `scv/SCV.md`로 통일. 기존 Claude project의
+  `scv/CLAUDE.md` 또는 기존 Codex project의 `scv/CODEX.md`만 있어도
+  hydrated로 즉시 인식하며 help/status/dry-run에서 파일을 만들거나
+  re-hydrate를 권하지 않음.
+- legacy state migration은 사용자가 승인한 non-dry-run sync에서만 수행.
+  원본을 `.scv-backup/`에 보존하고 기존 legacy file만 pointer로 바꾸며,
+  다른 host의 absent pointer를 만들지 않음. active index 내용이 다르면
+  어떤 것도 덮어쓰지 않고 conflict로 중단.
+- apply 순서는 read-only state 검증 → core sync 성공 → legacy
+  backup/pointer 전환. core sync가 실패하면 state index나 migration backup을
+  전혀 만들지 않는 failure-injection 회귀로 잠금.
+
+### Verification
+
+- shared core regression, Codex adapter state migration, plugin/skill schema,
+  Bash syntax, checksum/lock/API/action catalog 검사를 CI에 분리해 실행.
+
 ## [0.19.2-codex.1] — 2026-07-28
 
 ### Added — SCV for Codex 초기 포팅

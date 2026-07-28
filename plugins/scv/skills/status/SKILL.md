@@ -6,8 +6,7 @@ description: "Show SCV raw-material changes, active promote plans, archives, epi
 # SCV Status
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/status.md` completely.
+2. Read `../../vendor/scv-core/core/protocols/status.md` completely.
 3. Run the status protocol with the safely parsed arguments.
 4. Preserve the helper's status categories and recommend no mutation unless the
    user explicitly requests `--ack`.
-

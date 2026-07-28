@@ -1,0 +1,131 @@
+name: Check and vendor latest SCV Core
+
+on:
+  schedule:
+    - cron: "23 1 * * 1"
+  repository_dispatch:
+    types: [scv-core-released]
+  workflow_dispatch:
+    inputs:
+      core_tag:
+        description: "Optional scv-core release tag (blank = latest)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: scv-core-sync
+  cancel-in-progress: false
+
+jobs:
+  vendor:
+    name: Open a core update PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out develop
+        uses: actions/checkout@v5
+        with:
+          ref: develop
+          fetch-depth: 0
+          token: ${{ secrets.SCV_CORE_SYNC_TOKEN || github.token }}
+
+      - name: Resolve release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.SCV_CORE_SYNC_TOKEN || github.token }}
+          REQUESTED_TAG: ${{ inputs.core_tag || github.event.client_payload.core_tag || '' }}
+        run: |
+          set -euo pipefail
+          tag="$REQUESTED_TAG"
+          if [ -z "$tag" ]; then
+            tag="$(gh release view --repo wookiya1364/scv-core --json tagName -q .tagName)"
+          fi
+          case "$tag" in
+            v*) ;;
+            *) tag="v$tag" ;;
+          esac
+          version="${tag#v}"
+          current="$(
+            python3 -c 'import json, pathlib; p = pathlib.Path("plugins/scv/vendor/scv-core/core.lock.json"); print(json.loads(p.read_text())["core_version"] if p.exists() else "")'
+          )"
+          if [ "$current" = "$version" ]; then
+            needed=false
+          else
+            needed=true
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "needed=$needed" >> "$GITHUB_OUTPUT"
+
+      - name: Vendor the checksummed immutable release payload
+        if: steps.release.outputs.needed == 'true'
+        run: |
+          bash tools/vendor-core.sh --tag "${{ steps.release.outputs.tag }}"
+          bash tools/set-wrapper-version.sh "${{ steps.release.outputs.version }}-codex.1"
+
+      - name: Verify core, adapter, plugin, and common behavior
+        if: steps.release.outputs.needed == 'true'
+        run: |
+          bash tools/verify-core.sh
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          lock = json.loads(
+              Path("plugins/scv/vendor/scv-core/core.lock.json").read_text()
+          )
+          assert re.fullmatch(r"[0-9a-f]{64}", lock["artifact_sha256"]), (
+              "release vendoring must retain the verified tarball SHA-256"
+          )
+          PY
+          bash plugins/scv/tests/test-codex-plugin.sh
+          bash plugins/scv/tests/test-shared-core-adapter.sh
+          bash plugins/scv/tests/test-apply-model-policy.sh
+          bash plugins/scv/tests/test-vendor-core.sh
+          bash plugins/scv/vendor/scv-core/core/tests/run-dry.sh
+
+      - name: Open develop PR
+        if: steps.release.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SCV_CORE_SYNC_TOKEN || github.token }}
+          CORE_VERSION: ${{ steps.release.outputs.version }}
+          PREVIOUS_VERSION: ${{ steps.release.outputs.current }}
+        run: |
+          set -euo pipefail
+          branch="chore/core-${CORE_VERSION}"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "Remote branch already exists: $branch"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add VERSION plugins/scv tools
+          git commit -m "chore: vendor scv-core ${CORE_VERSION}"
+          git push origin "$branch"
+          body="$(
+            printf '%s\n' \
+              "Automated, pinned SCV Core update." \
+              "" \
+              "- Previous core: \`${PREVIOUS_VERSION:-none}\`" \
+              "- New core: \`${CORE_VERSION}\`" \
+              "- Wrapper release: \`${CORE_VERSION}-codex.1\`" \
+              "- Source: public \`wookiya1364/scv-core\` release" \
+              "- Verification: release artifact SHA-256, payload checksums, lock, Core API, Codex adapter, plugin contract, shared regression" \
+              "" \
+              "This PR is intentionally not auto-merged. It follows \`chore/* → develop → stage → main\`."
+          )"
+          gh pr create \
+            --base develop \
+            --head "$branch" \
+            --title "chore: vendor scv-core ${CORE_VERSION}" \
+            --body "$body"
+
+      - name: Already current
+        if: steps.release.outputs.needed != 'true'
+        run: echo "SCV Core ${{ steps.release.outputs.version }} is already pinned."

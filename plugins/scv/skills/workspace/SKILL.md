@@ -6,8 +6,7 @@ description: "Inspect or configure a repository as a standalone, child, or root 
 # SCV Workspace
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/workspace.md` completely.
+2. Read `../../vendor/scv-core/core/protocols/workspace.md` completely.
 3. Detect current workspace mode before proposing a change.
 4. Preserve reversible join and detach behavior and confirm the exact target
    before changing workspace metadata.
-
