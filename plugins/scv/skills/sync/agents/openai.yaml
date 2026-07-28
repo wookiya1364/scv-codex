@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:sync to preview template updates and check active plans for drift."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

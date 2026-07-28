@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="plugins/scv/assets/scv-circle.png" width="160" height="160" alt="SCV 마스코트" />
+<img src="plugins/scv/vendor/scv-core/core/assets/scv-circle.png" width="160" height="160" alt="SCV 마스코트" />
 
 # SCV for Codex
 
@@ -21,8 +21,9 @@
 
 ## 빠른 시작
 
-외울 스킬은 **`$scv:help`** 하나뿐입니다. 현재 프로젝트를 진단하고 다음
-SCV 행동을 추천합니다.
+SCV에는 자연어로 말하면 됩니다. 예를 들어 **“SCV로 이 프로젝트 상태를
+진단하고 다음 할 일을 알려줘”**라고 요청하면 Codex가 알맞은 스킬로
+연결합니다.
 
 ```bash
 # 1. 이 저장소를 Codex 플러그인 마켓플레이스로 추가합니다.
@@ -32,21 +33,24 @@ codex plugin marketplace add https://github.com/wookiya1364/scv-codex.git
 codex plugin add scv@scv-codex
 ```
 
-설치한 스킬을 불러오도록 새 Codex 채팅 또는 CLI 세션을 시작한 다음:
+설치한 스킬을 불러오도록 새 Codex 채팅 또는 CLI 세션을 시작한 다음
+자연어로 요청하세요.
 
 ```text
-$scv:help
+SCV로 이 프로젝트 상태를 진단하고 다음 할 일을 알려줘.
 ```
 
-아이디어나 과거 작업을 자연어로 넘길 수도 있습니다.
+정확한 스킬을 직접 선택하고 싶을 때만 `$scv:<name>`을 선택적으로
+사용합니다.
 
 ```text
 $scv:help "환불 버튼을 추가하고 싶어"
-$scv:help "지난 분기 환불 처리는 어떻게 했지?"
+$scv:deck scv/promote/refund/PLAN.md
 ```
 
-SCV는 명시적으로 호출하는 Codex 스킬입니다. 슬래시 명령이 아니라 literal
-`$scv:<name>` 형식을 사용합니다.
+`$` 형식은 설치된 Codex 스킬을 고르는 선택자이며 shell 명령이 아닙니다.
+`/scv:<name>`은 Claude Code의 slash command 표기이므로 이 plugin에서는
+사용하지 않습니다.
 
 ### 플랫폼 사전 준비
 
@@ -194,6 +198,39 @@ codex plugin add scv@scv-codex
 `scv/`는 자동으로 바뀌지 않습니다. 새 template 병합은 `$scv:sync`로
 별도 실행합니다.
 
+## 공유 core와 릴리스
+
+SCV 공통 동작은
+[scv-core](https://github.com/wookiya1364/scv-core)에 있습니다. 이
+저장소는 14개 Codex skill과 host capability mapping, Codex 전용 update 및
+model-policy만 소유하는 얇은 adapter입니다.
+
+모든 plugin release는 `plugins/scv/vendor/scv-core/`에 검증된 core를 고정해
+포함합니다. 설치와 일반 실행 중에는 network로 core를 받지 않습니다.
+`core.lock.json`, `SHA256SUMS`, source commit, 그리고 release에서 가져온
+경우 검증한 tarball의 `artifact_sha256`으로 payload를 추적할 수 있습니다.
+
+버전 세 가지는 독립적으로 관리합니다.
+
+- root/plugin `VERSION`: `0.20.1-codex.1` 같은 Codex wrapper release
+- `vendor/scv-core/VERSION`: 공유 동작
+- `vendor/scv-core/TEMPLATE_VERSION`: hydrate/sync가 관리하는 project 파일
+
+maintainer는 `bash tools/vendor-core.sh --source ../scv-core`로 local
+checkout을 시험하거나 `bash tools/vendor-core.sh --tag v0.20.1`으로
+checksum이 확인된 release를 고정할 수 있습니다.
+`bash tools/verify-core.sh`는 payload, lock, API 호환성, action catalog,
+adapter contract를 검사합니다. 정기 workflow는 `develop` 대상
+`chore/core-*` PR만 열며 자동 merge나 승격을 하지 않습니다.
+core release는 `scv-core-released` repository-dispatch event로 같은 검사를
+시작할 수도 있습니다. 기본값은 built-in token이며, Actions의 PR 생성이
+막힌 repo는 선택적으로 `SCV_CORE_SYNC_TOKEN` Actions secret을 설정합니다.
+
+project의 canonical index는 `scv/SCV.md`입니다. 기존 `scv/CLAUDE.md`나
+`scv/CODEX.md`만 있는 project도 파일 생성 없이 그대로 읽습니다. legacy
+state migration은 승인된 non-dry-run sync에서만 backup과 함께 수행하고,
+내용이 다른 index가 함께 있으면 conflict로 중단합니다.
+
 ## 저장소와 브랜치 흐름
 
 marketplace는 `.agents/plugins/marketplace.json`, plugin은 `plugins/scv/`
@@ -216,9 +253,9 @@ feat/* · fix/* · docs/* · chore/* · refactor/* · test/*
 
 ## 기원과 라이선스
 
-SCV for Codex는
-[SCV for Claude Code](https://github.com/wookiya1364/scv-claude-code)의
-기능과 문서 구성을 Codex plugin으로 포팅한 프로젝트입니다. Codex 포팅 전
+SCV for Codex와
+[SCV for Claude Code](https://github.com/wookiya1364/scv-claude-code)는
+같은 SCV Core를 사용하는 얇은 host adapter입니다. shared-core 분리 전
 릴리스 기록은 changelog에 upstream 역사로 보존합니다.
 
 MIT © [wookiya1364](https://github.com/wookiya1364)

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="plugins/scv/assets/scv-circle.png" width="160" height="160" alt="SCV マスコット" />
+<img src="plugins/scv/vendor/scv-core/core/assets/scv-circle.png" width="160" height="160" alt="SCV マスコット" />
 
 # SCV for Codex
 
@@ -21,8 +21,9 @@ archive → 今後の変更をこれまで出荷した挙動と照合します�
 
 ## クイックスタート
 
-覚えるスキルは **`$scv:help`** ひとつだけです。現在のプロジェクトを
-診断し、次に実行すべき SCV の操作を案内します。
+SCV には自然言語で依頼できます。たとえば **「SCV でこのプロジェクトを
+診断し、次にすることを教えて」** と頼むと、Codex が対応する skill へ
+route します。
 
 ```bash
 # 1. このリポジトリを Codex plugin marketplace として追加します。
@@ -33,21 +34,23 @@ codex plugin add scv@scv-codex
 ```
 
 インストールしたスキルを読み込むため、新しい Codex chat または CLI
-session を開始してから:
+session を開始してから自然言語で依頼します:
 
 ```text
-$scv:help
+SCV でこのプロジェクトを診断し、次にすることを教えて。
 ```
 
-アイデアや過去の作業を自然言語で渡すこともできます。
+skill を正確に選びたい場合だけ、任意の selector
+`$scv:<name>` を使用できます。
 
 ```text
 $scv:help "払い戻しボタンを追加したい"
-$scv:help "前四半期の払い戻し対応はどうした?"
+$scv:deck scv/promote/refund/PLAN.md
 ```
 
-SCV は明示的に呼び出す Codex skill です。slash command ではなく、
-literal `$scv:<name>` 形式を使用します。
+`$` 形式はインストール済み Codex skill の selector で、shell command
+ではありません。`/scv:<name>` は Claude Code の slash-command 表記
+なので、この plugin では使用しません。
 
 ### プラットフォーム前提
 
@@ -196,6 +199,41 @@ codex plugin add scv@scv-codex
 を更新しても現在の repo の `scv/` は自動変更されません。新しい template
 の merge は `$scv:sync` で別途実行します。
 
+## 共有 core と release
+
+SCV の共通動作は
+[scv-core](https://github.com/wookiya1364/scv-core) にあります。この
+repository は 14 個の Codex skill、host capability mapping、Codex 固有の
+update と model-policy だけを所有する thin adapter です。
+
+各 plugin release は検証済み core を
+`plugins/scv/vendor/scv-core/` に pin して同梱します。install や通常実行
+の途中で core を network 取得することはありません。`core.lock.json`,
+`SHA256SUMS`, source commit、および release 由来の場合は検証済み tarball
+の `artifact_sha256` により payload を追跡できます。
+
+次の 3 つの version は独立して管理します。
+
+- root/plugin `VERSION`: `0.20.1-codex.1` 形式の Codex wrapper release
+- `vendor/scv-core/VERSION`: 共有動作
+- `vendor/scv-core/TEMPLATE_VERSION`: hydrate/sync が管理する project file
+
+maintainer は `bash tools/vendor-core.sh --source ../scv-core` で local
+checkout を検証するか、`bash tools/vendor-core.sh --tag v0.20.1` で
+checksum 確認済み release を pin できます。`bash tools/verify-core.sh`
+は payload, lock, API compatibility, action catalog, adapter contract を
+検証します。定期 workflow は `develop` 向け `chore/core-*` PR を開くだけ
+で、自動 merge や promotion は行いません。
+core release は `scv-core-released` repository-dispatch event でも同じ
+check を開始できます。既定では built-in token を使い、Actions からの
+PR 作成を制限する repository では任意の `SCV_CORE_SYNC_TOKEN` Actions
+secret を設定できます。
+
+canonical project index は `scv/SCV.md` です。既存の
+`scv/CLAUDE.md` または `scv/CODEX.md` だけの project も file を生成せず
+読めます。legacy state の migration は承認済み non-dry-run sync でのみ
+backup 付きで行い、内容が異なる index が共存すれば conflict で停止します。
+
 ## リポジトリとブランチフロー
 
 marketplace は `.agents/plugins/marketplace.json`、plugin は
@@ -220,10 +258,9 @@ feat/* · fix/* · docs/* · chore/* · refactor/* · test/*
 
 ## 起源とライセンス
 
-SCV for Codex は
+SCV for Codex と
 [SCV for Claude Code](https://github.com/wookiya1364/scv-claude-code)
-の機能と文書構成を Codex plugin へ port したプロジェクトです。Codex
-port 以前の release note は changelog に upstream history として
-保持します。
+は同じ SCV Core を利用する thin host adapter です。shared-core 分離前の
+release note は changelog に upstream history として保持します。
 
 MIT © [wookiya1364](https://github.com/wookiya1364)

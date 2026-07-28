@@ -6,7 +6,6 @@ description: "Detect missing command-line dependencies used by SCV and provide p
 # SCV Install Dependencies
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/install-deps.md` completely.
+2. Read `../../vendor/scv-core/core/protocols/install-deps.md` completely.
 3. Diagnose first and show the exact proposed install commands.
 4. Install packages only when the user explicitly authorizes installation.
-

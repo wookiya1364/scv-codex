@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/scv-circle.png" width="128" height="128" alt="SCV 마스코트" />
+<img src="vendor/scv-core/core/assets/scv-circle.png" width="128" height="128" alt="SCV 마스코트" />
 
 # SCV for Codex
 
@@ -22,13 +22,15 @@ codex plugin marketplace add https://github.com/wookiya1364/scv-codex.git
 codex plugin add scv@scv-codex
 ```
 
-새 Codex 채팅 또는 CLI 세션을 시작한 다음 literal skill 이름을 호출합니다.
+새 Codex 채팅 또는 CLI 세션을 시작한 다음 자연어로 요청합니다.
 
 ```text
-$scv:help
+SCV로 이 프로젝트 상태를 진단하고 다음 할 일을 알려줘.
 ```
 
-SCV는 slash command가 아니라 명시적으로 호출하는 Codex skill입니다.
+14개 skill 모두 자연어로 호출할 수 있습니다. `$scv:help`는 정확한 skill을
+고르는 선택적 selector이고, `/scv:help`는 Claude Code slash command라서
+여기서는 사용하지 않습니다.
 
 ## 스킬
 
@@ -52,7 +54,14 @@ SCV는 slash command가 아니라 명시적으로 호출하는 Codex skill입니
 ## Codex 호환성
 
 workflow, repository layout, Bash helper, plan, test, archive, regression,
-deck 생성, multi-repo 조정 동작은 SCV for Claude Code에서 포팅했습니다.
+deck 생성, multi-repo 조정 동작은 Claude Code wrapper와 함께 사용하는
+고정된 `vendor/scv-core` payload에서 옵니다. 설치된 plugin은 self-contained
+형태이며 runtime에 core를 network로 받지 않습니다.
+
+wrapper, core, template version은 따로 추적합니다. core lock은 source와
+payload checksum, 해당되는 경우 검증된 release artifact SHA-256을
+기록합니다. `scv/SCV.md`가 canonical이며, 기존 `CLAUDE.md` 또는
+`CODEX.md` state는 변경 없이 읽고 승인된 sync에서만 migration합니다.
 
 host 차이 하나는 명시적으로 남습니다. Codex plugin skill은 skill별로 다른
 model을 pin할 수 없습니다. 따라서 `$scv:set-models`는 이전

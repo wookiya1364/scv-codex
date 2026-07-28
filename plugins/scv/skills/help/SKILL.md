@@ -6,7 +6,9 @@ description: "Diagnose an SCV-enabled repository, hydrate SCV when requested, se
 # SCV Help
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/help.md` completely.
+2. Read `../../vendor/scv-core/core/protocols/help.md` completely.
 3. Execute the help protocol with the arguments from the user's request.
-4. Lead with the diagnosed state and one recommended next action.
-
+4. If the user approves hydration, invoke
+   `../../adapter/scripts/hydrate.sh`; do not call the core hydrate helper
+   directly.
+5. Lead with the diagnosed state and one recommended next action.
