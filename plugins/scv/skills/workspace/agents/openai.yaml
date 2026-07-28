@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:workspace to configure this repository in an SCV workspace."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

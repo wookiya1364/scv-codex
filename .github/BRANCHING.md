@@ -4,7 +4,11 @@ Permanent branches: **`main`** · **`stage`** · **`develop`**. They are protect
 (PR required, no direct push / no deletion / no force-push) via a GitHub ruleset
 (`protect-permanent-branches`) plus the `branch-flow` workflow.
 
-## Allowed merges (enforced by `plugins/scv/scripts/check-branch-flow.sh`)
+## Allowed merges
+
+The vendored core check at
+`plugins/scv/vendor/scv-core/core/scripts/check-branch-flow.sh` enforces this
+table.
 
 | Target | Allowed sources |
 |---|---|
@@ -20,5 +24,5 @@ Permanent branches: **`main`** · **`stage`** · **`develop`**. They are protect
 Merged head branches are auto-deleted (repo setting `delete_branch_on_merge`).
 
 > This file is the branch-strategy reference used by the
-> `plugins/scv/scripts/check-branch-flow.sh` check and the `branch-flow`
-> GitHub Actions workflow.
+> vendored `check-branch-flow.sh` check and the `branch-flow` GitHub Actions
+> workflow.

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/scv-circle.png" width="128" height="128" alt="SCV mascot" />
+<img src="vendor/scv-core/core/assets/scv-circle.png" width="128" height="128" alt="SCV mascot" />
 
 # SCV for Codex
 
@@ -22,13 +22,15 @@ codex plugin marketplace add https://github.com/wookiya1364/scv-codex.git
 codex plugin add scv@scv-codex
 ```
 
-Start a new Codex chat or CLI session, then invoke the literal skill name:
+Start a new Codex chat or CLI session, then ask naturally:
 
 ```text
-$scv:help
+Use SCV to diagnose this project and tell me what to do next.
 ```
 
-SCV uses explicit Codex skills, not slash commands.
+Codex can invoke all 14 skills from natural language. `$scv:help` is an
+optional exact selector; `/scv:help` is a Claude Code slash command and is not
+used here.
 
 ## Skills
 
@@ -52,8 +54,15 @@ SCV uses explicit Codex skills, not slash commands.
 ## Codex compatibility
 
 The workflow, repository layout, Bash helpers, plans, tests, archives,
-regression behavior, deck generation, and multi-repository coordination are
-ported from SCV for Claude Code.
+regression behavior, deck generation, and multi-repository coordination come
+from the pinned `vendor/scv-core` payload shared with the Claude Code wrapper.
+The installed plugin is self-contained and never fetches core at runtime.
+
+Wrapper, core, and template versions are tracked separately. The core lock
+records source and payload checksums, plus the verified release artifact
+SHA-256 when applicable. `scv/SCV.md` is canonical; historical `CLAUDE.md` or
+`CODEX.md` state remains readable without mutation and migrates only during an
+approved sync.
 
 One host-level difference is explicit: Codex plugin skills cannot pin a
 different model per skill. `$scv:set-models` is therefore a read-only migration

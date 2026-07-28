@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:promote to refine raw material into an executable plan and tests."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

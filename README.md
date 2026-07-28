@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="plugins/scv/assets/scv-circle.png" width="160" height="160" alt="SCV mascot" />
+<img src="plugins/scv/vendor/scv-core/core/assets/scv-circle.png" width="160" height="160" alt="SCV mascot" />
 
 # SCV for Codex
 
@@ -21,8 +21,9 @@ plan and tests → check every future change against what the team has shipped.
 
 ## Quick start
 
-The only skill you need to remember is **`$scv:help`**. It diagnoses the
-project and recommends the next SCV action.
+You can talk to SCV naturally. For example, ask **“Use SCV to diagnose this
+project and tell me what to do next.”** Codex routes the request to the matching
+skill.
 
 ```bash
 # 1. Add the repository as a Codex plugin marketplace.
@@ -32,21 +33,23 @@ codex plugin marketplace add https://github.com/wookiya1364/scv-codex.git
 codex plugin add scv@scv-codex
 ```
 
-Start a new Codex chat or CLI session so the installed skills are loaded, then:
+Start a new Codex chat or CLI session so the installed skills are loaded, then
+ask naturally:
 
 ```text
-$scv:help
+Use SCV to diagnose this project and tell me what to do next.
 ```
 
-Examples:
+The `$scv:<name>` form remains available as an optional exact selector:
 
 ```text
 $scv:help "I want to add a refund button"
-$scv:help "How did we handle refunds last quarter?"
+$scv:deck scv/promote/refund/PLAN.md
 ```
 
-SCV skills are explicit Codex skills. Use the literal `$scv:<name>` form; they
-are not slash commands.
+The `$` form selects an installed Codex skill; it is not a shell command.
+`/scv:<name>` is a Claude Code slash-command spelling and is not used by this
+plugin.
 
 ### Platform prerequisites
 
@@ -197,6 +200,41 @@ Start a new Codex session afterward. Updating the installed plugin does not
 rewrite the current repository's `scv/`; run `$scv:sync` separately when you
 want to merge newer templates.
 
+## Shared core and releases
+
+SCV behavior lives in
+[scv-core](https://github.com/wookiya1364/scv-core). This repository is the
+thin Codex adapter: it packages 14 Codex skills, maps host capabilities, and
+owns only Codex-specific update and model-policy behavior.
+
+Every plugin release includes a pinned, self-contained core under
+`plugins/scv/vendor/scv-core/`. Installation and normal use never fetch core at
+runtime. `core.lock.json`, `SHA256SUMS`, the source commit, and—when vendored
+from a release—the verified tarball `artifact_sha256` make the embedded payload
+auditable.
+
+Three versions intentionally move independently:
+
+- root/plugin `VERSION`: the Codex wrapper release, such as
+  `0.20.1-codex.1`;
+- `vendor/scv-core/VERSION`: shared behavior;
+- `vendor/scv-core/TEMPLATE_VERSION`: project files managed by hydrate/sync.
+
+Maintainers can test a local checkout with
+`bash tools/vendor-core.sh --source ../scv-core`, or pin a checksummed release
+with `bash tools/vendor-core.sh --tag v0.20.1`. `bash tools/verify-core.sh`
+checks the payload, lock, API compatibility, action catalog, and adapter
+contract. A scheduled check may open a `chore/core-*` PR to `develop`, but
+never merges or promotes it automatically. Core releases may also trigger the
+same check with the `scv-core-released` repository-dispatch event. The workflow
+uses the built-in token by default; repositories that block PR creation from
+Actions can configure an optional `SCV_CORE_SYNC_TOKEN` Actions secret.
+
+The canonical project index is `scv/SCV.md`. Existing `scv/CLAUDE.md` and
+`scv/CODEX.md` projects remain readable without mutation. Only an approved
+non-dry-run sync migrates legacy state, with a backup; divergent indexes stop
+as a conflict.
+
 ## Repository and branch flow
 
 The marketplace lives at `.agents/plugins/marketplace.json`; the plugin lives
@@ -220,9 +258,9 @@ See [`.github/BRANCHING.md`](./.github/BRANCHING.md) for the full policy.
 
 ## Origin and license
 
-SCV for Codex ports the behavior and documentation of
-[SCV for Claude Code](https://github.com/wookiya1364/scv-claude-code).
-Historical release notes before the Codex port remain in the changelog as
-upstream history.
+SCV for Codex and
+[SCV for Claude Code](https://github.com/wookiya1364/scv-claude-code) are thin
+host adapters over the same SCV Core. Historical release notes before the
+shared-core split remain in the changelog as upstream history.
 
 MIT © [wookiya1364](https://github.com/wookiya1364)
