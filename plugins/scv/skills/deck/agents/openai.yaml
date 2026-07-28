@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Deck"
+  short_description: "Render SCV Markdown as a polished HTML document"
+  default_prompt: "Use $scv:deck to turn this Markdown plan into a polished HTML document."
+
+policy:
+  allow_implicit_invocation: false

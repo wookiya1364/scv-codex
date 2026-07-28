@@ -1,0 +1,99 @@
+name: Codex plugin CI
+
+on:
+  push:
+    branches: [main, stage, develop]
+    paths:
+      - ".agents/plugins/marketplace.json"
+      - "plugins/scv/**"
+      - ".github/workflows/plugin-ci.yml"
+  pull_request:
+    paths:
+      - ".agents/plugins/marketplace.json"
+      - "plugins/scv/**"
+      - ".github/workflows/plugin-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Codex plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest, marketplace, and skill layout
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("plugins/scv")
+          manifest = json.loads((root / ".codex-plugin/plugin.json").read_text())
+          marketplace = json.loads(
+              Path(".agents/plugins/marketplace.json").read_text()
+          )
+
+          assert manifest["name"] == "scv"
+          assert manifest["skills"] == "./skills/"
+          assert marketplace["name"] == "scv-codex"
+
+          entries = marketplace["plugins"]
+          assert len(entries) == 1
+          assert entries[0]["name"] == manifest["name"]
+          assert entries[0]["source"] == {
+              "source": "local",
+              "path": "./plugins/scv",
+          }
+
+          skills = sorted(path for path in (root / "skills").iterdir() if path.is_dir())
+          assert len(skills) == 14, f"expected 14 skills, found {len(skills)}"
+          for skill in skills:
+              assert (skill / "SKILL.md").is_file(), f"{skill}: missing SKILL.md"
+              assert (skill / "agents/openai.yaml").is_file(), (
+                  f"{skill}: missing agents/openai.yaml"
+              )
+
+          assert not (root / "commands").exists(), (
+              "legacy commands/ would be auto-migrated into duplicate skills"
+          )
+          PY
+
+      - name: Validate Codex-specific invariants
+        run: bash plugins/scv/tests/test-codex-plugin.sh
+
+      - name: Check Bash syntax
+        run: |
+          while IFS= read -r -d '' script; do
+            bash -n "$script"
+          done < <(
+            find plugins/scv/scripts plugins/scv/tests \
+              -type f -name '*.sh' -print0
+          )
+
+  test:
+    name: SCV regression suite
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run dry-run regression
+        run: bash plugins/scv/tests/run-dry.sh
+
+      - name: Run focused shell tests
+        run: |
+          for test_script in plugins/scv/tests/test-*.sh; do
+            if [ "$test_script" = "plugins/scv/tests/test-codex-plugin.sh" ]; then
+              continue
+            fi
+            echo "::group::$test_script"
+            bash "$test_script"
+            echo "::endgroup::"
+          done
