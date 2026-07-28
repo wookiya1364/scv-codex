@@ -6,8 +6,7 @@ description: "Compare the installed SCV Codex plugin with its latest release and
 # SCV Update
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/update.md` completely.
+2. Read `../../adapter/protocols/update.md` completely.
 3. Keep diagnostics read-only.
 4. Use Codex marketplace commands from the adapted protocol and require a new
    Codex chat or CLI session after reinstalling.
-

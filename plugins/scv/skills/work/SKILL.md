@@ -6,8 +6,7 @@ description: "Implement an active SCV promote plan, run its tests, handle regres
 # SCV Work
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/work.md` completely.
+2. Read `../../vendor/scv-core/core/protocols/work.md` completely.
 3. Execute the selected plan end to end within its declared scope.
 4. Always run the specified tests. Archive, notify, push, and create a PR or MR
    only under the protocol's consent rules.
-

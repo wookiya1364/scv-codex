@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:set-models to inspect or configure the Codex model policy used with SCV."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true
