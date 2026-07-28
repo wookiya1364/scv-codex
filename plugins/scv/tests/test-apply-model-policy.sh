@@ -7,7 +7,7 @@
 set -uo pipefail
 
 PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPT="$PLUGIN_ROOT/scripts/apply-model-policy.sh"
+SCRIPT="$PLUGIN_ROOT/adapter/scripts/apply-model-policy.sh"
 
 PASS=0
 FAIL=0
@@ -49,7 +49,13 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 digest = hashlib.sha256()
-for base in (root / "skills", root / "references" / "protocols"):
+for base in (
+    root / "skills",
+    root / "adapter" / "protocols",
+    root / "vendor" / "scv-core" / "core" / "protocols",
+):
+    if not base.exists():
+        continue
     for path in sorted(p for p in base.rglob("*") if p.is_file()):
         digest.update(path.relative_to(root).as_posix().encode())
         digest.update(b"\0")

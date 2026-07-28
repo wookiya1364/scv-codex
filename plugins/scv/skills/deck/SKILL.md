@@ -6,8 +6,7 @@ description: "Render Markdown or an SCV promote plan as a polished self-containe
 # SCV Deck
 
 1. Read `../../references/codex-runtime.md` completely and apply it.
-2. Read `../../references/protocols/deck.md` completely.
+2. Read `../../vendor/scv-core/core/protocols/deck.md` completely.
 3. Select document mode by default and slide mode only when the user requests a
    presentation.
 4. Run the deck checks and report the generated file path.
-

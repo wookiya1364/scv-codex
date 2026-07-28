@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $scv:report to report this SCV phase result to the configured team channel."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

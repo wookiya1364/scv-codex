@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/scv-circle.png" width="128" height="128" alt="SCV マスコット" />
+<img src="vendor/scv-core/core/assets/scv-circle.png" width="128" height="128" alt="SCV マスコット" />
 
 # SCV for Codex
 
@@ -21,14 +21,15 @@ codex plugin marketplace add https://github.com/wookiya1364/scv-codex.git
 codex plugin add scv@scv-codex
 ```
 
-新しい Codex chat または CLI session を開始し、literal skill 名を
-呼び出します。
+新しい Codex chat または CLI session を開始し、自然言語で依頼します。
 
 ```text
-$scv:help
+SCV でこのプロジェクトを診断し、次にすることを教えて。
 ```
 
-SCV は slash command ではなく、明示的に呼び出す Codex skill です。
+14 個の skill はすべて自然言語で呼び出せます。`$scv:help` は正確な
+skill を選ぶ任意の selector で、`/scv:help` は Claude Code の
+slash-command なのでここでは使用しません。
 
 ## スキル
 
@@ -52,7 +53,15 @@ SCV は slash command ではなく、明示的に呼び出す Codex skill です
 ## Codex 互換性
 
 workflow、repository layout、Bash helper、plan、test、archive、regression、
-deck 生成、multi-repo 調整は SCV for Claude Code から port しました。
+deck 生成、multi-repo 調整は Claude Code wrapper と共有する pin 済み
+`vendor/scv-core` payload から提供されます。installed plugin は
+self-contained で、runtime に core を network 取得しません。
+
+wrapper, core, template version は別々に追跡します。core lock は source
+と payload checksum、および該当する場合は検証済み release artifact
+SHA-256 を記録します。`scv/SCV.md` が canonical で、既存の
+`CLAUDE.md` または `CODEX.md` state は変更せず読め、承認済み sync
+でのみ migration します。
 
 host の差が一つあります。Codex plugin skill は skill ごとに異なる model
 を pin できません。そのため `$scv:set-models` は旧

@@ -4,14 +4,20 @@ on:
   push:
     branches: [main, stage, develop]
     paths:
+      - "VERSION"
       - ".agents/plugins/marketplace.json"
       - "plugins/scv/**"
+      - "tools/**"
       - ".github/workflows/plugin-ci.yml"
+      - ".github/workflows/core-sync.yml"
   pull_request:
     paths:
+      - "VERSION"
       - ".agents/plugins/marketplace.json"
       - "plugins/scv/**"
+      - "tools/**"
       - ".github/workflows/plugin-ci.yml"
+      - ".github/workflows/core-sync.yml"
   workflow_dispatch:
 
 permissions:
@@ -23,76 +29,61 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate Codex plugin
+    name: Verify core and Codex adapter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Validate manifest, marketplace, and skill layout
-        run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
+      - name: Verify checksums, lock, API, actions, and skills
+        run: bash tools/verify-core.sh
 
-          root = Path("plugins/scv")
-          manifest = json.loads((root / ".codex-plugin/plugin.json").read_text())
-          marketplace = json.loads(
-              Path(".agents/plugins/marketplace.json").read_text()
-          )
-
-          assert manifest["name"] == "scv"
-          assert manifest["skills"] == "./skills/"
-          assert marketplace["name"] == "scv-codex"
-
-          entries = marketplace["plugins"]
-          assert len(entries) == 1
-          assert entries[0]["name"] == manifest["name"]
-          assert entries[0]["source"] == {
-              "source": "local",
-              "path": "./plugins/scv",
-          }
-
-          skills = sorted(path for path in (root / "skills").iterdir() if path.is_dir())
-          assert len(skills) == 14, f"expected 14 skills, found {len(skills)}"
-          for skill in skills:
-              assert (skill / "SKILL.md").is_file(), f"{skill}: missing SKILL.md"
-              assert (skill / "agents/openai.yaml").is_file(), (
-                  f"{skill}: missing agents/openai.yaml"
-              )
-
-          assert not (root / "commands").exists(), (
-              "legacy commands/ would be auto-migrated into duplicate skills"
-          )
-          PY
-
-      - name: Validate Codex-specific invariants
+      - name: Validate the self-contained plugin contract
         run: bash plugins/scv/tests/test-codex-plugin.sh
 
       - name: Check Bash syntax
         run: |
+          set -euo pipefail
           while IFS= read -r -d '' script; do
             bash -n "$script"
           done < <(
-            find plugins/scv/scripts plugins/scv/tests \
+            find \
+              tools \
+              plugins/scv/adapter \
+              plugins/scv/tests \
+              plugins/scv/vendor/scv-core/tools \
+              plugins/scv/vendor/scv-core/core/scripts \
+              plugins/scv/vendor/scv-core/core/tests \
               -type f -name '*.sh' -print0
           )
 
-  test:
-    name: SCV regression suite
+  adapter:
+    name: Codex adapter regressions
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Run dry-run regression
-        run: bash plugins/scv/tests/run-dry.sh
-
-      - name: Run focused shell tests
+      - name: Run wrapper-only behavior tests
         run: |
-          for test_script in plugins/scv/tests/test-*.sh; do
-            if [ "$test_script" = "plugins/scv/tests/test-codex-plugin.sh" ]; then
-              continue
-            fi
+          set -euo pipefail
+          bash plugins/scv/tests/test-shared-core-adapter.sh
+          bash plugins/scv/tests/test-apply-model-policy.sh
+          bash plugins/scv/tests/test-vendor-core.sh
+
+  core:
+    name: Vendored SCV Core regressions
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run shared dry-run regression
+        run: bash plugins/scv/vendor/scv-core/core/tests/run-dry.sh
+
+      - name: Run shared focused shell tests
+        run: |
+          set -euo pipefail
+          for test_script in plugins/scv/vendor/scv-core/core/tests/test-*.sh; do
             echo "::group::$test_script"
             bash "$test_script"
             echo "::endgroup::"
