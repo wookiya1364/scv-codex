@@ -1664,6 +1664,8 @@ echo "=== [11hh] lib/attachments.sh — size guards ==="
 SIZE_OUT=$(bash <<'INNER_EOF'
 source $STANDARD_ROOT/scripts/lib/attachments.sh
 TMP=$(mktemp -d); cd "$TMP"; git init -q -b main
+git config user.email t@t
+git config user.name t
 git remote add origin https://github.com/test/test.git
 
 # fake remote bare so push works
@@ -1698,6 +1700,8 @@ LOCAL="$WORK/repo"
 git init -q --bare "$ORIGIN"
 git init -q -b main "$LOCAL"
 cd "$LOCAL"
+git config user.email t@t
+git config user.name t
 git remote add origin "$ORIGIN"
 echo init > README.md
 git add README.md
@@ -1784,6 +1788,8 @@ LOCAL="$WORK/repo"
 git init -q --bare "$ORIGIN"
 git init -q -b main "$LOCAL"
 cd "$LOCAL"
+git config user.email t@t
+git config user.name t
 git remote add origin "$ORIGIN"
 echo init > README.md
 git add README.md
@@ -1868,6 +1874,8 @@ LOCAL="$WORK/repo"
 git init -q --bare "$ORIGIN"
 git init -q -b main "$LOCAL"
 cd "$LOCAL"
+git config user.email t@t
+git config user.name t
 git remote add origin "$ORIGIN"
 echo init > README.md
 git add README.md
@@ -2172,7 +2180,7 @@ assert_contains "$WORK_CMD" ".scv-pr-artifacts"
 echo
 echo "=== [11cc] Codex protocols — no Claude-only host syntax ==="
 legacy_host_pattern='CLAUDE_PLUGIN_ROOT|\$ARGUMENTS|AskUserQuestion|/scv:|\.claude/settings|Claude Code skill|You — Claude|^(model|allowed-tools|argument-hint):'
-if rg -n "$legacy_host_pattern" "$PROTOCOL_ROOT" "$STANDARD_ROOT/skills"; then
+if grep -R -nE "$legacy_host_pattern" "$PROTOCOL_ROOT" "$STANDARD_ROOT/skills"; then
   fail "Codex workflows still contain Claude-only host syntax"
 else
   pass "Codex workflows contain no Claude-only host syntax"

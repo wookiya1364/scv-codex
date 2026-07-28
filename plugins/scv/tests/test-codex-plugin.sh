@@ -182,7 +182,7 @@ echo
 echo "── Host migration guards ──"
 
 forbidden_pattern='CLAUDE_PLUGIN_ROOT|\$ARGUMENTS|AskUserQuestion|/scv:|\.claude/settings|Claude Code skill|You — Claude|^(model|allowed-tools|argument-hint):'
-if rg -n "$forbidden_pattern" "$PLUGIN_ROOT/skills" "$PROTOCOL_ROOT"; then
+if grep -R -nE "$forbidden_pattern" "$PLUGIN_ROOT/skills" "$PROTOCOL_ROOT"; then
   fail "Codex skills or protocols still contain Claude-only host syntax"
 else
   ok "Codex skills and protocols contain no Claude-only host syntax"
