@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Help"
+  short_description: "Diagnose SCV state and choose the next action"
+  default_prompt: "Use $scv:help to inspect this project and recommend the next SCV action."
+
+policy:
+  allow_implicit_invocation: false

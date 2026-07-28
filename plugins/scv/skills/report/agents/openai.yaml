@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Report"
+  short_description: "Send an SCV phase result to Slack or Discord"
+  default_prompt: "Use $scv:report to report this SCV phase result to the configured team channel."
+
+policy:
+  allow_implicit_invocation: false
