@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Codegen"
+  short_description: "Drive an SCV plan through case-by-case TDD"
+  default_prompt: "Use $scv:codegen to implement the selected SCV plan with Red-Green TDD."
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,20 @@
+{
+  "name": "scv-codex",
+  "interface": {
+    "displayName": "SCV for Codex"
+  },
+  "plugins": [
+    {
+      "name": "scv",
+      "source": {
+        "source": "local",
+        "path": "./plugins/scv"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

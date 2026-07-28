@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Update"
+  short_description: "Check and guide updates for the SCV Codex plugin"
+  default_prompt: "Use $scv:update to check whether the SCV Codex plugin needs an update."
+
+policy:
+  allow_implicit_invocation: false
