@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Status"
+  short_description: "Show raw, promote, archive, and workspace status"
+  default_prompt: "Use $scv:status to show the current SCV workflow status."
+
+policy:
+  allow_implicit_invocation: false
