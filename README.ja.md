@@ -214,7 +214,7 @@ update と model-policy だけを所有する thin adapter です。
 
 次の 3 つの version は独立して管理します。
 
-- root/plugin `VERSION`: `0.20.4-codex.1` 形式の Codex wrapper release
+- root/plugin `VERSION`: `X.Y.Z-codex.N` 形式の Codex wrapper release
 - `vendor/scv-core/VERSION`: 共有動作
 - `vendor/scv-core/TEMPLATE_VERSION`: hydrate/sync が管理する project file
 
