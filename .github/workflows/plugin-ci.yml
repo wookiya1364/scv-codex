@@ -57,11 +57,23 @@ jobs:
           )
 
   adapter:
-    name: Codex adapter regressions
+    name: Codex adapter regressions (${{ matrix.os }})
     needs: validate
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
+
+      - name: Install modern Bash on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew list bash >/dev/null 2>&1 || brew install bash
+          modern_bash="$(brew --prefix)/bin/bash"
+          "$modern_bash" -c 'test "${BASH_VERSINFO[0]}" -ge 4'
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
 
       - name: Run wrapper-only behavior tests
         run: |
@@ -69,6 +81,7 @@ jobs:
           bash plugins/scv/tests/test-shared-core-adapter.sh
           bash plugins/scv/tests/test-apply-model-policy.sh
           bash plugins/scv/tests/test-vendor-core.sh
+          bash plugins/scv/tests/test-vendor-core-atomicity.sh
 
   core:
     name: Vendored SCV Core regressions
@@ -83,8 +96,16 @@ jobs:
       - name: Run shared focused shell tests
         run: |
           set -euo pipefail
-          for test_script in plugins/scv/vendor/scv-core/core/tests/test-*.sh; do
+          isolated_root="$(mktemp -d)"
+          trap 'rm -rf "$isolated_root"' EXIT
+          cp -R -p \
+            plugins/scv/vendor/scv-core/core \
+            "$isolated_root/core"
+          for test_script in "$isolated_root"/core/tests/test-*.sh; do
             echo "::group::$test_script"
             bash "$test_script"
             echo "::endgroup::"
           done
+          python3 tools/validate-core-tree.py \
+            --root plugins/scv/vendor/scv-core
+          bash tools/verify-core.sh

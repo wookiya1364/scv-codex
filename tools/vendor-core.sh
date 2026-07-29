@@ -86,17 +86,22 @@ fi
   exit 1
 }
 
-TARGET="$(
-  python3 - "$TARGET" "$REPO_ROOT" <<'PY'
+TARGET_INFO="$(
+  python3 - "$TARGET" "$DEFAULT_TARGET" "$REPO_ROOT" \
+    "${SCV_VENDOR_ALLOW_CUSTOM_TARGET:-0}" <<'PY'
 import os
 import sys
 from pathlib import Path
 
 raw_target = Path(sys.argv[1]).expanduser()
+default = Path(sys.argv[2]).resolve(strict=False)
+repo = Path(sys.argv[3]).resolve()
+allow_custom = sys.argv[4] == "1"
+if not raw_target.is_absolute():
+    raw_target = Path.cwd() / raw_target
 if raw_target.is_symlink():
     raise SystemExit(f"error: refusing symlink vendor target: {raw_target}")
 target = raw_target.resolve(strict=False)
-repo = Path(sys.argv[2]).resolve()
 plugin = (repo / "plugins/scv").resolve()
 forbidden = {Path("/").resolve(), repo, plugin}
 home = os.environ.get("HOME")
@@ -104,34 +109,260 @@ if home:
     forbidden.add(Path(home).resolve())
 if target in forbidden:
     raise SystemExit(f"error: refusing unsafe vendor target: {target}")
-if target.exists():
-    if not target.is_dir() or not (target / "core.lock.json").is_file():
-        raise SystemExit(
-            "error: existing vendor target is not a locked SCV Core payload: "
-            f"{target}"
-        )
+if target != default and not allow_custom:
+    raise SystemExit(
+        "error: custom vendor targets require "
+        "SCV_VENDOR_ALLOW_CUSTOM_TARGET=1"
+    )
+name = target.name
+if (
+    not name
+    or name in {".", ".."}
+    or any(character not in
+           "abcdefghijklmnopqrstuvwxyz"
+           "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+           "0123456789._-" for character in name)
+):
+    raise SystemExit(f"error: unsafe vendor target basename: {name!r}")
 print(target)
+print("default" if target == default else "custom")
 PY
 )"
+TARGET="$(printf '%s\n' "$TARGET_INFO" | sed -n '1p')"
+TARGET_KIND="$(printf '%s\n' "$TARGET_INFO" | sed -n '2p')"
+[[ -n "$TARGET" && -n "$TARGET_KIND" ]] || {
+  echo "error: failed to resolve vendor target" >&2
+  exit 1
+}
+LEGACY_DECKUI="$REPO_ROOT/plugins/scv/DeckUI"
+if [[ -n "${SCV_VENDOR_TEST_LEGACY_DECKUI:-}" ]]; then
+  [[ "$TARGET_KIND" == "custom" ]] || {
+    echo "error: legacy DeckUI test override requires a custom target" >&2
+    exit 1
+  }
+  LEGACY_DECKUI="$SCV_VENDOR_TEST_LEGACY_DECKUI"
+fi
+
+TARGET_PARENT="$(dirname "$TARGET")"
+TARGET_NAME="$(basename "$TARGET")"
+mkdir -p "$TARGET_PARENT"
+TARGET_PARENT="$(cd "$TARGET_PARENT" && pwd -P)"
+TARGET="$TARGET_PARENT/$TARGET_NAME"
+read -r PARENT_DEVICE PARENT_INODE < <(
+  python3 - "$TARGET_PARENT" <<'PY'
+import os
+import stat
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+flags |= getattr(os, "O_NOFOLLOW", 0)
+descriptor = os.open(path, flags)
+try:
+    opened = os.fstat(descriptor)
+    entry = path.lstat()
+    if (
+        not stat.S_ISDIR(entry.st_mode)
+        or entry.st_dev != opened.st_dev
+        or entry.st_ino != opened.st_ino
+    ):
+        raise SystemExit(
+            f"error: vendor parent identity or type changed: {path}"
+        )
+    print(opened.st_dev, opened.st_ino)
+finally:
+    os.close(descriptor)
+PY
+)
+
+path_exists() {
+  [[ -e "$1" || -L "$1" ]]
+}
+
+if path_exists "$TARGET"; then
+  [[ -d "$TARGET" && ! -L "$TARGET" ]] || {
+    echo "error: existing vendor target is not an ordinary directory: $TARGET" >&2
+    exit 1
+  }
+  [[ -f "$TARGET/core.lock.json" && ! -L "$TARGET/core.lock.json" ]] || {
+    echo "error: existing vendor target is not a locked SCV Core payload: $TARGET" >&2
+    exit 1
+  }
+fi
+
+process_start_id() {
+  python3 - "$1" <<'PY'
+import hashlib
+import subprocess
+import sys
+from pathlib import Path
+
+pid = sys.argv[1]
+proc = Path("/proc") / pid / "stat"
+try:
+    print("proc-" + proc.read_text(encoding="utf-8").rsplit(")", 1)[1].split()[19])
+except (IndexError, OSError):
+    try:
+        value = subprocess.check_output(
+            ["ps", "-o", "lstart=", "-p", pid],
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        value = b""
+    if value:
+        print("ps-" + hashlib.sha256(value).hexdigest())
+    else:
+        print("unknown")
+PY
+}
+
+LOCK_PATH="$TARGET_PARENT/.${TARGET_NAME}.scv-vendor.lock"
+LOCK_NAME="$(basename "$LOCK_PATH")"
+LOCK_TOKEN="$(python3 -B -c 'import secrets; print(secrets.token_hex(24))')"
+LOCK_PROCESS_START="$(process_start_id "$$")"
+LOCK_OWNED=0
+
+acquire_vendor_lock() {
+  python3 -B "$SCRIPT_DIR/atomic_core_swap.py" lock-acquire \
+    --parent "$TARGET_PARENT" \
+    --lock-name "$LOCK_NAME" \
+    --pid "$$" \
+    --process-start "$LOCK_PROCESS_START" \
+    --token "$LOCK_TOKEN" \
+    --expected-parent-device "$PARENT_DEVICE" \
+    --expected-parent-inode "$PARENT_INODE"
+  LOCK_OWNED=1
+}
+
+release_vendor_lock() {
+  (( LOCK_OWNED )) || return 0
+  python3 -B "$SCRIPT_DIR/atomic_core_swap.py" lock-release \
+    --parent "$TARGET_PARENT" \
+    --lock-name "$LOCK_NAME" \
+    --pid "$$" \
+    --process-start "$LOCK_PROCESS_START" \
+    --token "$LOCK_TOKEN" \
+    --expected-parent-device "$PARENT_DEVICE" \
+    --expected-parent-inode "$PARENT_INODE" || return 1
+  LOCK_OWNED=0
+}
+
+trap 'release_vendor_lock || true' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+acquire_vendor_lock
+
+for orphan in \
+  "$TARGET_PARENT"/."$TARGET_NAME".install.* \
+  "$TARGET_PARENT"/."$TARGET_NAME".previous.* \
+  "$TARGET_PARENT"/."$TARGET_NAME".scv-vendor.stale-*; do
+  if path_exists "$orphan"; then
+    echo "error: unfinished Core vendor transaction requires recovery: $orphan" >&2
+    release_vendor_lock || true
+    exit 1
+  fi
+done
+
+if [[ "${SCV_VENDOR_TEST_HOLD_LOCK:-0}" == "1" ]]; then
+  [[ -n "${SCV_VENDOR_TEST_READY_FILE:-}" &&
+     -n "${SCV_VENDOR_TEST_CONTINUE_FILE:-}" ]] || {
+    echo "error: lock test hook requires ready and continue files" >&2
+    release_vendor_lock || true
+    exit 1
+  }
+  printf 'ready\n' >"$SCV_VENDOR_TEST_READY_FILE"
+  while [[ ! -e "$SCV_VENDOR_TEST_CONTINUE_FILE" ]]; do
+    sleep 0.02
+  done
+fi
 
 TASK_TMP="$(mktemp -d "${TMPDIR:-/tmp}/scv-codex-vendor.XXXXXX")"
 INSTALL_STAGE=""
-BACKUP=""
+INSTALL_STAGE_DIGEST=""
 cleanup() {
-  local rc=$?
+  local rc=$? cleanup_rc=0
   trap - EXIT
-  if [[ -n "$BACKUP" && -e "$BACKUP" && ! -e "$TARGET" ]]; then
-    mv "$BACKUP" "$TARGET" || {
-      echo "error: failed to restore previous vendor from $BACKUP" >&2
-    }
-  fi
-  if [[ -n "$INSTALL_STAGE" && -e "$INSTALL_STAGE" ]]; then
-    rm -rf "$INSTALL_STAGE"
+  trap '' HUP INT TERM
+  if [[ -n "$INSTALL_STAGE" && -n "$INSTALL_STAGE_DIGEST" ]] &&
+     path_exists "$INSTALL_STAGE"; then
+    python3 -B "$SCRIPT_DIR/atomic_core_swap.py" remove \
+      --parent "$TARGET_PARENT" \
+      --name "$(basename "$INSTALL_STAGE")" \
+      --expected-digest "$INSTALL_STAGE_DIGEST" \
+      --expected-parent-device "$PARENT_DEVICE" \
+      --expected-parent-inode "$PARENT_INODE" || cleanup_rc=1
   fi
   rm -rf "$TASK_TMP"
+  release_vendor_lock || cleanup_rc=1
+  if [[ "$rc" -eq 0 && "$cleanup_rc" -ne 0 ]]; then
+    rc="$cleanup_rc"
+  fi
   exit "$rc"
 }
 trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+CACHE_BASE="$(
+  python3 - \
+    "${SCV_DECK_CACHE_DIR:-}" \
+    "${XDG_CACHE_HOME:-}" \
+    "${HOME:-}" \
+    "$REPO_ROOT" \
+    "$TARGET" \
+    "$LEGACY_DECKUI" \
+    "$TASK_TMP" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+explicit, xdg, home, repo_arg, target_arg, legacy_arg, task_arg = sys.argv[1:]
+if explicit:
+    raw = Path(explicit).expanduser()
+elif xdg:
+    raw = Path(xdg).expanduser() / "scv/deckui"
+elif home:
+    raw = Path(home).expanduser() / ".cache/scv/deckui"
+else:
+    raise SystemExit(
+        "error: set SCV_DECK_CACHE_DIR, XDG_CACHE_HOME, or HOME"
+    )
+if not raw.is_absolute():
+    raise SystemExit("error: SCV Deck cache base must be an absolute path")
+if raw.is_symlink():
+    raise SystemExit(f"error: SCV Deck cache base must not be a symlink: {raw}")
+base = raw.resolve(strict=False)
+
+def overlaps(first: Path, second: Path) -> bool:
+    try:
+        first.relative_to(second)
+        return True
+    except ValueError:
+        pass
+    try:
+        second.relative_to(first)
+        return True
+    except ValueError:
+        return False
+
+for label, value in (
+    ("repository", repo_arg),
+    ("vendor target", target_arg),
+    ("legacy DeckUI", legacy_arg),
+    ("vendor temporary directory", task_arg),
+):
+    forbidden = Path(value).resolve(strict=False)
+    if overlaps(base, forbidden):
+        raise SystemExit(
+            f"error: SCV Deck cache overlaps the {label}: {base}"
+        )
+print(base)
+PY
+)"
+export SCV_DECK_CACHE_DIR="$CACHE_BASE"
 
 portable_sha256() {
   local file="$1"
@@ -144,6 +375,86 @@ portable_sha256() {
     return 1
   fi
 }
+
+OLD_STATE="absent"
+OLD_DIGEST=""
+if path_exists "$TARGET"; then
+  OLD_STATE="present"
+  OLD_DIGEST="$(
+    python3 "$SCRIPT_DIR/core_tree_state.py" snapshot --root "$TARGET"
+  )"
+  IMMUTABLE_PREIMAGE="$TASK_TMP/existing-immutable"
+  python3 "$SCRIPT_DIR/core_tree_state.py" sanitize \
+    --root "$TARGET" \
+    --output "$IMMUTABLE_PREIMAGE"
+  python3 "$SCRIPT_DIR/validate-core-tree.py" --root "$IMMUTABLE_PREIMAGE"
+  [[ -x "$IMMUTABLE_PREIMAGE/tools/verify-core.sh" ]] || {
+    echo "error: existing vendor lacks an executable Core verifier" >&2
+    exit 1
+  }
+  bash "$IMMUTABLE_PREIMAGE/tools/verify-core.sh" \
+    --root "$IMMUTABLE_PREIMAGE"
+  OLD_AFTER_SANITIZE="$(
+    python3 "$SCRIPT_DIR/core_tree_state.py" snapshot --root "$TARGET"
+  )"
+  [[ "$OLD_AFTER_SANITIZE" == "$OLD_DIGEST" ]] || {
+    echo "error: existing vendor changed while validating its preimage" >&2
+    exit 1
+  }
+fi
+
+LEGACY_RUNTIME="no"
+LEGACY_DIGEST=""
+if path_exists "$LEGACY_DECKUI"; then
+  [[ -d "$LEGACY_DECKUI" && ! -L "$LEGACY_DECKUI" ]] || {
+    echo "error: legacy plugin-root DeckUI is not an ordinary directory" >&2
+    exit 1
+  }
+  LEGACY_DIGEST="$(
+    python3 "$SCRIPT_DIR/core_tree_state.py" snapshot \
+      --root "$LEGACY_DECKUI"
+  )"
+fi
+
+pause_vendor_test() {
+  local point=$1 count=0
+  [[ "${SCV_VENDOR_TEST_PAUSE_AT:-}" == "$point" ]] || return 0
+  [[ -n "${SCV_VENDOR_TEST_READY_FILE:-}" &&
+     -n "${SCV_VENDOR_TEST_CONTINUE_FILE:-}" ]] || {
+    echo "error: test pause requires ready and continue files" >&2
+    return 1
+  }
+  printf '%s\n' "$point" >"$SCV_VENDOR_TEST_READY_FILE"
+  while [[ ! -e "$SCV_VENDOR_TEST_CONTINUE_FILE" &&
+           "$count" -lt 1000 ]]; do
+    sleep 0.02
+    count=$((count + 1))
+  done
+  [[ -e "$SCV_VENDOR_TEST_CONTINUE_FILE" ]] || {
+    echo "error: timed out at vendor test pause: $point" >&2
+    return 1
+  }
+}
+
+pause_vendor_test "before-runtime-export"
+
+EXISTING_RUNTIME="no"
+if [[ "$OLD_STATE" == "present" ]]; then
+  EXISTING_RUNTIME="$(
+    python3 "$SCRIPT_DIR/core_tree_state.py" export-runtime \
+      --root "$TARGET" \
+      --output "$TASK_TMP/existing-deck-runtime" \
+      --expected-digest "$OLD_DIGEST"
+  )"
+fi
+if [[ -n "$LEGACY_DIGEST" ]]; then
+  LEGACY_RUNTIME="$(
+    python3 "$SCRIPT_DIR/core_tree_state.py" export-runtime \
+      --deckui-root "$LEGACY_DECKUI" \
+      --output "$TASK_TMP/legacy-deck-runtime" \
+      --expected-digest "$LEGACY_DIGEST"
+  )"
+fi
 
 resolve_export_root() {
   local search_root="$1"
@@ -462,9 +773,32 @@ PY
 
 python3 "$SCRIPT_DIR/validate-core-tree.py" --root "$STAGED_TARGET"
 
-TARGET_PARENT="$(dirname "$TARGET")"
-TARGET_NAME="$(basename "$TARGET")"
-mkdir -p "$TARGET_PARENT"
+STAGED_DIGEST_BEFORE_MIGRATION="$(
+  python3 "$SCRIPT_DIR/core_tree_state.py" snapshot --root "$STAGED_TARGET"
+)"
+DECK_RUNTIME_HELPER="$STAGED_TARGET/core/scripts/deck-runtime.sh"
+[[ -x "$DECK_RUNTIME_HELPER" ]] || {
+  echo "error: candidate Core lacks an executable Deck runtime helper" >&2
+  exit 1
+}
+
+if [[ "$EXISTING_RUNTIME" == "yes" ]]; then
+  bash "$DECK_RUNTIME_HELPER" migrate \
+    --from "$TASK_TMP/existing-deck-runtime" >/dev/null
+fi
+if [[ "$LEGACY_RUNTIME" == "yes" ]]; then
+  bash "$DECK_RUNTIME_HELPER" migrate \
+    --from "$TASK_TMP/legacy-deck-runtime" \
+    --reuse-existing >/dev/null
+fi
+
+STAGED_DIGEST_AFTER_MIGRATION="$(
+  python3 "$SCRIPT_DIR/core_tree_state.py" snapshot --root "$STAGED_TARGET"
+)"
+[[ "$STAGED_DIGEST_AFTER_MIGRATION" == "$STAGED_DIGEST_BEFORE_MIGRATION" ]] || {
+  echo "error: candidate Core changed during Deck runtime migration" >&2
+  exit 1
+}
 INSTALL_STAGE="$(
   mktemp -d "$TARGET_PARENT/.${TARGET_NAME}.install.XXXXXX"
 )"
@@ -473,48 +807,70 @@ if command -v rsync >/dev/null 2>&1; then
 else
   cp -R -p "$STAGED_TARGET/." "$INSTALL_STAGE/"
 fi
+python3 - "$STAGED_TARGET" "$INSTALL_STAGE" <<'PY'
+import os
+import stat
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1]).lstat()
+destination = Path(sys.argv[2])
+if not stat.S_ISDIR(source.st_mode):
+    raise SystemExit("error: staged Core root is not an ordinary directory")
+os.chmod(destination, stat.S_IMODE(source.st_mode))
+PY
 python3 "$SCRIPT_DIR/validate-core-tree.py" --root "$INSTALL_STAGE"
 bash "$INSTALL_STAGE/tools/verify-core.sh" --root "$INSTALL_STAGE"
+INSTALL_STAGE_DIGEST="$(
+  python3 "$SCRIPT_DIR/core_tree_state.py" snapshot --root "$INSTALL_STAGE"
+)"
 
-if [[ -e "$TARGET" ]]; then
-  BACKUP="$(
-    mktemp -d "$TARGET_PARENT/.${TARGET_NAME}.previous.XXXXXX"
-  )"
-  rmdir "$BACKUP"
-  mv "$TARGET" "$BACKUP"
-fi
+BACKUP_PATH="$(
+  mktemp -d "$TARGET_PARENT/.${TARGET_NAME}.previous.XXXXXX"
+)"
+rmdir "$BACKUP_PATH"
+BACKUP_NAME="$(basename "$BACKUP_PATH")"
+INSTALL_NAME="$(basename "$INSTALL_STAGE")"
 
-install_rc=0
-if [[ "${SCV_VENDOR_TEST_FAIL_INSTALL:-0}" == "1" ]]; then
-  install_rc=97
-else
-  if mv "$INSTALL_STAGE" "$TARGET"; then
-    INSTALL_STAGE=""
-  else
-    install_rc=$?
-  fi
-fi
-if [[ "$install_rc" -ne 0 ]]; then
-  if [[ -n "$BACKUP" && -e "$BACKUP" ]]; then
-    mv "$BACKUP" "$TARGET"
-    BACKUP=""
-  fi
-  echo "error: failed to install verified core; previous vendor restored" >&2
-  exit "$install_rc"
+if [[ "${SCV_VENDOR_TEST_FAIL_INSTALL:-0}" == "1" &&
+      -z "${SCV_VENDOR_TEST_FAILPOINT:-}" ]]; then
+  export SCV_VENDOR_TEST_FAILPOINT="after-backup"
 fi
 
-if [[ -n "$BACKUP" && -e "$BACKUP" ]]; then
-  if rm -rf "$BACKUP"; then
-    BACKUP=""
-  else
-    echo "warning: installed core but could not remove backup: $BACKUP" >&2
-  fi
+swap_args=(
+  swap
+  --parent "$TARGET_PARENT"
+  --target-name "$TARGET_NAME"
+  --install-name "$INSTALL_NAME"
+  --backup-name "$BACKUP_NAME"
+  --old-state "$OLD_STATE"
+  --expected-new "$INSTALL_STAGE_DIGEST"
+  --expected-parent-device "$PARENT_DEVICE"
+  --expected-parent-inode "$PARENT_INODE"
+)
+if [[ "$OLD_STATE" == "present" ]]; then
+  swap_args+=(--expected-old "$OLD_DIGEST")
 fi
+trap '' HUP INT TERM
+set +e
+python3 -B "$SCRIPT_DIR/atomic_core_swap.py" "${swap_args[@]}"
+swap_rc=$?
+set -e
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+if [[ "$swap_rc" -ne 0 ]]; then
+  exit "$swap_rc"
+fi
+INSTALL_STAGE=""
+INSTALL_STAGE_DIGEST=""
 
 if [[ ! -d "$TARGET" ]]; then
   echo "error: failed to replace $TARGET" >&2
   exit 1
 fi
+python3 "$SCRIPT_DIR/validate-core-tree.py" --root "$TARGET"
+bash "$TARGET/tools/verify-core.sh" --root "$TARGET"
 
 echo "SCV Core vendored successfully"
 echo "TARGET: $TARGET"
