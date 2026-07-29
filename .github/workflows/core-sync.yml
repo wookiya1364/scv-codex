@@ -51,7 +51,12 @@ jobs:
           current="$(
             python3 -c 'import json, pathlib; p = pathlib.Path("plugins/scv/vendor/scv-core/core.lock.json"); print(json.loads(p.read_text())["core_version"] if p.exists() else "")'
           )"
-          if [ "$current" = "$version" ]; then
+          artifact_sha="$(
+            python3 -c 'import json, pathlib; p = pathlib.Path("plugins/scv/vendor/scv-core/core.lock.json"); print((json.loads(p.read_text()).get("artifact_sha256") or "") if p.exists() else "")'
+          )"
+          if [[ "$current" = "$version" &&
+                "$artifact_sha" =~ ^[0-9a-f]{64}$ ]] &&
+             bash tools/verify-core.sh >/dev/null 2>&1; then
             needed=false
           else
             needed=true
@@ -65,7 +70,6 @@ jobs:
         if: steps.release.outputs.needed == 'true'
         run: |
           bash tools/vendor-core.sh --tag "${{ steps.release.outputs.tag }}"
-          bash tools/set-wrapper-version.sh "${{ steps.release.outputs.version }}-codex.1"
 
       - name: Verify core, adapter, plugin, and common behavior
         if: steps.release.outputs.needed == 'true'
@@ -87,7 +91,31 @@ jobs:
           bash plugins/scv/tests/test-shared-core-adapter.sh
           bash plugins/scv/tests/test-apply-model-policy.sh
           bash plugins/scv/tests/test-vendor-core.sh
+          bash plugins/scv/tests/test-vendor-core-atomicity.sh
           bash plugins/scv/vendor/scv-core/core/tests/run-dry.sh
+          isolated_root="$(mktemp -d)"
+          trap 'rm -rf "$isolated_root"' EXIT
+          cp -R -p \
+            plugins/scv/vendor/scv-core/core \
+            "$isolated_root/core"
+          for test_script in "$isolated_root"/core/tests/test-*.sh; do
+            bash "$test_script"
+          done
+          while IFS= read -r -d '' script; do
+            bash -n "$script"
+          done < <(
+            find \
+              tools \
+              plugins/scv/adapter \
+              plugins/scv/tests \
+              plugins/scv/vendor/scv-core/tools \
+              plugins/scv/vendor/scv-core/core/scripts \
+              plugins/scv/vendor/scv-core/core/tests \
+              -type f -name '*.sh' -print0
+          )
+          python3 tools/validate-core-tree.py \
+            --root plugins/scv/vendor/scv-core
+          git diff --check
 
       - name: Open develop PR
         if: steps.release.outputs.needed == 'true'
@@ -98,23 +126,43 @@ jobs:
         run: |
           set -euo pipefail
           branch="chore/core-${CORE_VERSION}"
+          git add plugins/scv tools
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
-            echo "Remote branch already exists: $branch"
-            exit 0
+            git fetch origin \
+              "refs/heads/$branch:refs/remotes/origin/$branch"
+            if ! git diff --cached --quiet "origin/$branch" -- \
+                plugins/scv tools; then
+              echo "::error::Remote branch $branch differs from the verified Core update." >&2
+              exit 1
+            fi
+            pr_url="$(
+              gh pr list \
+                --base develop \
+                --head "$branch" \
+                --state open \
+                --json url \
+                --jq '.[0].url // ""'
+            )"
+            if [[ -n "$pr_url" ]]; then
+              echo "Existing core update PR: $pr_url"
+              exit 0
+            fi
+            echo "Reusing remote branch without an open PR: $branch"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git switch -c "$branch"
+            git commit -m "chore: vendor scv-core ${CORE_VERSION}"
+            git push origin "$branch"
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -c "$branch"
-          git add VERSION plugins/scv tools
-          git commit -m "chore: vendor scv-core ${CORE_VERSION}"
-          git push origin "$branch"
+          wrapper_version="$(tr -d '[:space:]' < VERSION)"
           body="$(
             printf '%s\n' \
               "Automated, pinned SCV Core update." \
               "" \
               "- Previous core: \`${PREVIOUS_VERSION:-none}\`" \
               "- New core: \`${CORE_VERSION}\`" \
-              "- Wrapper release: \`${CORE_VERSION}-codex.1\`" \
+              "- Wrapper release: \`${wrapper_version}\` (unchanged)" \
               "- Source: public \`wookiya1364/scv-core\` release" \
               "- Verification: release artifact SHA-256, payload checksums, lock, Core API, Codex adapter, plugin contract, shared regression" \
               "" \
@@ -128,4 +176,6 @@ jobs:
 
       - name: Already current
         if: steps.release.outputs.needed != 'true'
-        run: echo "SCV Core ${{ steps.release.outputs.version }} is already pinned."
+        run: |
+          bash tools/verify-core.sh
+          echo "SCV Core ${{ steps.release.outputs.version }} is already pinned and verified."

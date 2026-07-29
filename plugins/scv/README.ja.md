@@ -76,6 +76,13 @@ archive の前にテスト合格と承認が必要です。push、PR/MR 作成�
 dependency install、永続 Codex config 変更は consent gate を保ちます。
 `$scv:update` と model-policy 検査は read-only です。
 
+Deck dependency、build、生成済み deck JSON は pin 済み Core payload を
+key とする外部 cache に置きます。maintainer update では旧 vendor または
+legacy plugin-root `DeckUI` の既知 runtime だけを stable snapshot から
+additive に copy し、source は変更も削除もしません。検証済み Core tree
+は owner lock の下で置換し、catchable failure では以前の tree を正確に
+復元します。
+
 ```bash
 codex plugin marketplace upgrade scv-codex
 codex plugin add scv@scv-codex
