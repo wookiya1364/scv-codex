@@ -294,6 +294,21 @@ assert_contains "$CORE_ROOT/host-profile.env" "SCV_ARGUMENT_STYLE=argv-array" \
 assert_contains "$CORE_ROOT/host-profile.env" \
   "SCV_LEGACY_STATE_INDEXES=CLAUDE.md|CODEX.md" \
   "vendored host profile retains cross-host legacy discovery"
+assert_contains "$PLUGIN_ROOT/adapter/scripts/state-index.sh" \
+  'vendor/scv-core/core/scripts/state-index.sh' \
+  "state-index adapter delegates to the pinned Core resolver"
+assert_contains "$PLUGIN_ROOT/adapter/scripts/state-index.sh" \
+  'exec bash "$CORE_STATE_INDEX" "$@"' \
+  "state-index adapter preserves the Core argv boundary"
+if grep -qF 'SCV:HOST-POINTER target=SCV.md' \
+  "$PLUGIN_ROOT/adapter/scripts/state-index.sh"; then
+  fail "state-index adapter duplicates the Core pointer contract"
+else
+  ok "state-index adapter contains no second pointer resolver"
+fi
+assert_contains "$CORE_ROOT/scripts/state-index.sh" \
+  '<!-- SCV:HOST-POINTER target=SCV.md -->' \
+  "vendored Core owns the exact pointer marker"
 
 if grep -R -nE '\{\{SCV_(ARGS|FREEFORM_ARGS|FREEFORM_TRANSPORT)\}\}' \
   "$CORE_ROOT/protocols" >/dev/null 2>&1; then
@@ -511,7 +526,7 @@ if [[ -x "$PLUGIN_ROOT/adapter/scripts/hydrate.sh" \
   fi
   mapfile -t migration_backups < <(
     find "$PROJECT/.scv-backup" -type f \
-      -path '*/shared-core-migration/CLAUDE.md' 2>/dev/null
+      -path '*/shared-core-migration-*/CLAUDE.md' 2>/dev/null
   )
   if [[ "${#migration_backups[@]}" -eq 1 ]]; then
     ok "successful sync keeps one dedicated Claude migration backup"
