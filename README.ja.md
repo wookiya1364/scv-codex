@@ -214,12 +214,12 @@ update と model-policy だけを所有する thin adapter です。
 
 次の 3 つの version は独立して管理します。
 
-- root/plugin `VERSION`: `0.20.1-codex.1` 形式の Codex wrapper release
+- root/plugin `VERSION`: `0.20.4-codex.1` 形式の Codex wrapper release
 - `vendor/scv-core/VERSION`: 共有動作
 - `vendor/scv-core/TEMPLATE_VERSION`: hydrate/sync が管理する project file
 
 maintainer は `bash tools/vendor-core.sh --source ../scv-core` で local
-checkout を検証するか、`bash tools/vendor-core.sh --tag v0.20.1` で
+checkout を検証するか、`bash tools/vendor-core.sh --tag vX.Y.Z` で
 checksum 確認済み release を pin できます。`bash tools/verify-core.sh`
 は payload, lock, API compatibility, action catalog, adapter contract を
 検証します。定期 workflow は `develop` 向け `chore/core-*` PR を開くだけ
@@ -228,6 +228,25 @@ core release は `scv-core-released` repository-dispatch event でも同じ
 check を開始できます。既定では built-in token を使い、Actions からの
 PR 作成を制限する repository では任意の `SCV_CORE_SYNC_TOKEN` Actions
 secret を設定できます。
+
+Core vendoring は既定で、この repository の正確な vendor destination
+だけを許可します。test や管理された tool が custom target を使う場合は
+明示的な opt-in が必要です。updater は manifest/metadata と完全一致する
+tree、byte/type/mode snapshot、隣接 owner lock を検証し、開いた parent
+directory FD 上の same-filesystem no-replace rename で commit します。
+failure と catchable signal は以前の tree を正確に復元します。不完全な
+rollback や強制終了では recovery evidence を保持し、後続 update を
+fail-closed で停止します。
+
+Deck dependency、build、生成済み deck JSON は mutable runtime なので、
+Core source-payload SHA-256 を key とする外部 cache に置きます。置換前に
+旧 vendor または legacy `plugins/scv/DeckUI` の許可された runtime だけを
+FD-stable snapshot から additive に copy します。source は変更も削除も
+しません。その後 swap が失敗しても、すでに copy された cache entry は
+意図した安全な additive state として残ります。別 host が先に作成した
+cache と persistent plugin-root source が衝突する場合、cache 全体を
+authoritative として legacy source 全体を skip し、cross-host の部分的な
+混在を防ぎます。既存 vendor の recovery は引き続き strict です。
 
 canonical project index は `scv/SCV.md` です。既存の
 `scv/CLAUDE.md` または `scv/CODEX.md` だけの project も file を生成せず

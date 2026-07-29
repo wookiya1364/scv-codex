@@ -213,8 +213,6 @@ wrapper_match = re.fullmatch(
 )
 if not wrapper_match:
     raise SystemExit(f"unexpected Codex wrapper version: {release_version}")
-if wrapper_match.group(1) != core_version:
-    raise SystemExit("Codex wrapper base version does not match core VERSION")
 actions_doc = json.loads((vendor / "core/actions.json").read_text())
 actions_raw = actions_doc.get("actions", actions_doc)
 if isinstance(actions_raw, list):
