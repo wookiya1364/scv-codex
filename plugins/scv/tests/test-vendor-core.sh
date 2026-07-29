@@ -99,6 +99,9 @@ PY
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+export SCV_VENDOR_ALLOW_CUSTOM_TARGET=1
+export SCV_VENDOR_TEST_LEGACY_DECKUI="$WORK/no-legacy-deckui"
+export SCV_DECK_CACHE_DIR="$WORK/deck-cache"
 
 VERSION="$(tr -d '[:space:]' <"$SOURCE_VENDOR/VERSION")"
 TAG="v$VERSION"
@@ -233,8 +236,8 @@ output="$(
 )"
 rc=$?
 after_rejection="$(tree_snapshot "$WORK/vendored")"
-if [[ "$rc" -eq 97 ]] \
-  && grep -qF "previous vendor restored" <<<"$output"; then
+if [[ "$rc" -ne 0 ]] \
+  && grep -qF "previous vendor restored exactly" <<<"$output"; then
   ok "injected install failure is detected after backup"
 else
   fail "injected install failure was accepted or misdiagnosed: $rc"

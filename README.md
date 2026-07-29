@@ -216,19 +216,38 @@ auditable.
 Three versions intentionally move independently:
 
 - root/plugin `VERSION`: the Codex wrapper release, such as
-  `0.20.1-codex.1`;
+  `0.20.4-codex.1`;
 - `vendor/scv-core/VERSION`: shared behavior;
 - `vendor/scv-core/TEMPLATE_VERSION`: project files managed by hydrate/sync.
 
 Maintainers can test a local checkout with
 `bash tools/vendor-core.sh --source ../scv-core`, or pin a checksummed release
-with `bash tools/vendor-core.sh --tag v0.20.1`. `bash tools/verify-core.sh`
+with `bash tools/vendor-core.sh --tag vX.Y.Z`. `bash tools/verify-core.sh`
 checks the payload, lock, API compatibility, action catalog, and adapter
 contract. A scheduled check may open a `chore/core-*` PR to `develop`, but
 never merges or promotes it automatically. Core releases may also trigger the
 same check with the `scv-core-released` repository-dispatch event. The workflow
 uses the built-in token by default; repositories that block PR creation from
 Actions can configure an optional `SCV_CORE_SYNC_TOKEN` Actions secret.
+
+Core vendoring accepts only the repository's exact vendor destination by
+default. Tests and controlled tooling must explicitly opt into a custom target.
+The updater validates the exact manifest/metadata tree, takes stable
+byte/type/mode snapshots, holds an adjacent owner lock, and commits with
+same-filesystem, no-replace renames through an opened parent directory.
+Failures and catchable signals restore the prior tree exactly; an incomplete
+rollback or uncatchable death preserves recovery evidence and blocks later
+updates.
+
+Deck dependencies, builds, and generated deck JSON are mutable runtime data,
+so they live in an external cache keyed by the Core source-payload SHA-256.
+Before replacement, allowed runtime from an older vendor or legacy
+`plugins/scv/DeckUI` is copied additively from an FD-stable snapshot. The
+sources are never edited or deleted. If the later swap fails, already copied
+cache entries intentionally remain as a safe additive state. If a persistent
+plugin-root source conflicts with a cache already populated by another host,
+the cache is authoritative and the whole legacy source is skipped, preventing
+partial cross-host mixing. Existing-vendor recovery remains strict.
 
 The canonical project index is `scv/SCV.md`. Existing `scv/CLAUDE.md` and
 `scv/CODEX.md` projects remain readable without mutation. Only an approved

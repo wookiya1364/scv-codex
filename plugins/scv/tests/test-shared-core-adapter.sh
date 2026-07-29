@@ -20,6 +20,18 @@ fail() {
   FAIL=$((FAIL + 1))
 }
 
+portable_sha256() {
+  local file=$1
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$file" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$file" | awk '{print $1}'
+  else
+    echo "error: sha256sum or shasum is required" >&2
+    return 1
+  fi
+}
+
 assert_file() {
   local path="$1" label="$2"
   if [[ -f "$path" ]]; then
@@ -67,10 +79,10 @@ claude_project="$WORK/claude-only"
 mkdir -p "$claude_project/scv"
 printf '# existing Claude state\n\nPROJECT: LOCAL\nSTATUS: N/A\n' \
   >"$claude_project/scv/CLAUDE.md"
-before="$(sha256sum "$claude_project/scv/CLAUDE.md")"
+before="$(portable_sha256 "$claude_project/scv/CLAUDE.md")"
 output="$(bash "$STATE_INDEX" --project-dir "$claude_project" 2>&1)"
 rc=$?
-after="$(sha256sum "$claude_project/scv/CLAUDE.md")"
+after="$(portable_sha256 "$claude_project/scv/CLAUDE.md")"
 assert_rc "$rc" 0 "CLAUDE.md-only inspection succeeds"
 assert_contains "$output" "STATE_INDEX: legacy" \
   "CLAUDE.md-only project is recognized as hydrated"
@@ -113,7 +125,10 @@ assert_contains "$(cat "$claude_project/scv/CLAUDE.md")" \
   "existing CLAUDE.md becomes a compatibility pointer"
 assert_absent "$claude_project/scv/CODEX.md" \
   "Claude migration does not create an absent CODEX.md"
-mapfile -t claude_backups < <(
+claude_backups=()
+while IFS= read -r backup; do
+  claude_backups+=("$backup")
+done < <(
   find "$claude_project/.scv-backup" -type f -name CLAUDE.md 2>/dev/null
 )
 if [[ "${#claude_backups[@]}" -eq 1 ]] \
@@ -167,15 +182,15 @@ conflict_project="$WORK/conflict"
 mkdir -p "$conflict_project/scv"
 printf '# canonical A\n' >"$conflict_project/scv/SCV.md"
 printf '# legacy B\n' >"$conflict_project/scv/CLAUDE.md"
-canonical_before="$(sha256sum "$conflict_project/scv/SCV.md")"
-legacy_before="$(sha256sum "$conflict_project/scv/CLAUDE.md")"
+canonical_before="$(portable_sha256 "$conflict_project/scv/SCV.md")"
+legacy_before="$(portable_sha256 "$conflict_project/scv/CLAUDE.md")"
 output="$(bash "$STATE_INDEX" --project-dir "$conflict_project" --migrate 2>&1)"
 rc=$?
 assert_rc "$rc" 4 "divergent SCV.md and CLAUDE.md fail closed"
 assert_contains "$output" "STATE_INDEX_CONFLICT:" \
   "divergent state reports an explicit conflict"
-if [[ "$canonical_before" == "$(sha256sum "$conflict_project/scv/SCV.md")" ]] \
-  && [[ "$legacy_before" == "$(sha256sum "$conflict_project/scv/CLAUDE.md")" ]]; then
+if [[ "$canonical_before" == "$(portable_sha256 "$conflict_project/scv/SCV.md")" ]] \
+  && [[ "$legacy_before" == "$(portable_sha256 "$conflict_project/scv/CLAUDE.md")" ]]; then
   ok "conflict leaves both active indexes unchanged"
 else
   fail "conflict changed an active state index"
@@ -226,7 +241,7 @@ failure_project="$WORK/core-sync-failure"
 mkdir -p "$failure_project/scv"
 printf '# existing Claude state\n\nPROJECT: LOCAL\nSTATUS: N/A\n' \
   >"$failure_project/scv/CLAUDE.md"
-failure_before="$(sha256sum "$failure_project/scv/CLAUDE.md")"
+failure_before="$(portable_sha256 "$failure_project/scv/CLAUDE.md")"
 output="$(
   bash "$failure_plugin/adapter/scripts/sync.sh" \
     --project-dir "$failure_project" 2>&1
@@ -235,7 +250,7 @@ rc=$?
 assert_rc "$rc" 23 "core sync failure is propagated"
 assert_contains "$output" "INJECTED_CORE_SYNC_FAILURE" \
   "failure injection reached the core sync boundary"
-if [[ "$failure_before" == "$(sha256sum "$failure_project/scv/CLAUDE.md")" ]]; then
+if [[ "$failure_before" == "$(portable_sha256 "$failure_project/scv/CLAUDE.md")" ]]; then
   ok "failed core sync preserves CLAUDE.md byte-for-byte"
 else
   fail "failed core sync changed CLAUDE.md"
