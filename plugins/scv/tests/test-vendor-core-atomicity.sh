@@ -90,6 +90,7 @@ wait_for_file() {
 }
 
 WORK="$(mktemp -d)"
+WORK="$(cd "$WORK" && pwd -P)"
 trap 'rm -rf "$WORK"' EXIT
 
 echo "── target authority and immutable-tree validation ──"
