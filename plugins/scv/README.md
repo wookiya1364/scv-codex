@@ -77,6 +77,13 @@ SCV requires passing tests and approval before archive. Push, PR/MR creation,
 notifications, dependency installation, and persistent Codex config changes
 stay consent-gated. `$scv:update` and model-policy inspection are read-only.
 
+Deck dependencies, builds, and generated deck JSON live in an external cache
+keyed by the pinned Core payload. During a maintainer update, known runtime
+from the previous vendor or legacy plugin-root `DeckUI` is copied additively
+from a stable snapshot; neither source is modified or deleted. The verified
+Core tree is replaced under an owner lock with exact rollback on catchable
+failures.
+
 To refresh an installed copy:
 
 ```bash
