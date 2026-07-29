@@ -107,6 +107,33 @@ for key, expected in expected_profile.items():
     if profile.get(key) != expected:
         raise SystemExit(f"{key}: expected {expected!r}, got {profile.get(key)!r}")
 
+state_adapter = plugin / "adapter/scripts/state-index.sh"
+core_state_index = vendor / "core/scripts/state-index.sh"
+if not state_adapter.is_file() or not core_state_index.is_file():
+    raise SystemExit("shared state-index adapter/Core entrypoint is absent")
+state_adapter_text = state_adapter.read_text()
+required_delegation = (
+    'CORE_STATE_INDEX="$PLUGIN_ROOT/vendor/scv-core/core/scripts/state-index.sh"',
+    'SCV_HOST_PROFILE="$PROFILE" exec bash "$CORE_STATE_INDEX" "$@"',
+)
+for expected_line in required_delegation:
+    if expected_line not in state_adapter_text.splitlines():
+        raise SystemExit(
+            "Codex state-index adapter does not delegate argv unchanged "
+            "to the vendored Core resolver"
+        )
+for duplicate_resolver_token in (
+    "SCV:HOST-POINTER",
+    "STATE_INDEX_CONFLICT:",
+    "active_legacy",
+    "is_pointer()",
+):
+    if duplicate_resolver_token in state_adapter_text:
+        raise SystemExit(
+            "Codex state-index adapter duplicates Core resolver semantics: "
+            f"{duplicate_resolver_token}"
+        )
+
 lock = json.loads((vendor / "core.lock.json").read_text())
 required_lock = {
     "schema_version",

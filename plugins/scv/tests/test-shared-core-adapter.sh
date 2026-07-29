@@ -77,6 +77,7 @@ echo "── shared-core state adapter ──"
 # read-only and must not manufacture either canonical or Codex state.
 claude_project="$WORK/claude-only"
 mkdir -p "$claude_project/scv"
+printf '# intake\n' >"$claude_project/scv/INTAKE.md"
 printf '# existing Claude state\n\nPROJECT: LOCAL\nSTATUS: N/A\n' \
   >"$claude_project/scv/CLAUDE.md"
 before="$(portable_sha256 "$claude_project/scv/CLAUDE.md")"
@@ -121,7 +122,7 @@ assert_file "$claude_project/scv/SCV.md" \
 assert_contains "$(cat "$claude_project/scv/SCV.md")" "PROJECT: LOCAL" \
   "canonical state preserves the legacy project marker"
 assert_contains "$(cat "$claude_project/scv/CLAUDE.md")" \
-  "# SCV compatibility pointer for Claude Code" \
+  "<!-- SCV:HOST-POINTER target=SCV.md -->" \
   "existing CLAUDE.md becomes a compatibility pointer"
 assert_absent "$claude_project/scv/CODEX.md" \
   "Claude migration does not create an absent CODEX.md"
@@ -141,6 +142,7 @@ fi
 # Historical Codex-only state follows the same read-only and migration rules.
 codex_project="$WORK/codex-only"
 mkdir -p "$codex_project/scv"
+printf '# intake\n' >"$codex_project/scv/INTAKE.md"
 printf '# existing Codex state\n\nPROJECT: LOCAL\nSTATUS: N/A\n' \
   >"$codex_project/scv/CODEX.md"
 output="$(bash "$STATE_INDEX" --project-dir "$codex_project" 2>&1)"
@@ -157,7 +159,7 @@ output="$(bash "$STATE_INDEX" --project-dir "$codex_project" --migrate 2>&1)"
 rc=$?
 assert_rc "$rc" 0 "approved Codex migration succeeds"
 assert_contains "$(cat "$codex_project/scv/CODEX.md")" \
-  "# SCV compatibility pointer for Codex" \
+  "<!-- SCV:HOST-POINTER target=SCV.md -->" \
   "existing CODEX.md becomes a compatibility pointer"
 assert_absent "$codex_project/scv/CLAUDE.md" \
   "Codex migration does not create an absent CLAUDE.md"
@@ -165,6 +167,7 @@ assert_absent "$codex_project/scv/CLAUDE.md" \
 # Canonical-only state needs no host-specific pointer.
 canonical_project="$WORK/canonical-only"
 mkdir -p "$canonical_project/scv"
+printf '# intake\n' >"$canonical_project/scv/INTAKE.md"
 printf '# canonical\n\nPROJECT: LOCAL\nSTATUS: N/A\n' \
   >"$canonical_project/scv/SCV.md"
 output="$(bash "$STATE_INDEX" --project-dir "$canonical_project" 2>&1)"
@@ -180,6 +183,7 @@ assert_absent "$canonical_project/scv/CLAUDE.md" \
 # Divergent active indexes are never resolved implicitly, including migration.
 conflict_project="$WORK/conflict"
 mkdir -p "$conflict_project/scv"
+printf '# intake\n' >"$conflict_project/scv/INTAKE.md"
 printf '# canonical A\n' >"$conflict_project/scv/SCV.md"
 printf '# legacy B\n' >"$conflict_project/scv/CLAUDE.md"
 canonical_before="$(portable_sha256 "$conflict_project/scv/SCV.md")"
@@ -189,6 +193,8 @@ rc=$?
 assert_rc "$rc" 4 "divergent SCV.md and CLAUDE.md fail closed"
 assert_contains "$output" "STATE_INDEX_CONFLICT:" \
   "divergent state reports an explicit conflict"
+assert_contains "$output" "HYDRATED: yes" \
+  "conflicted readable state is not misclassified as unhydrated"
 if [[ "$canonical_before" == "$(portable_sha256 "$conflict_project/scv/SCV.md")" ]] \
   && [[ "$legacy_before" == "$(portable_sha256 "$conflict_project/scv/CLAUDE.md")" ]]; then
   ok "conflict leaves both active indexes unchanged"
@@ -203,6 +209,7 @@ assert_absent "$conflict_project/scv/CODEX.md" \
 # Two different legacy hosts also require a human choice.
 dual_project="$WORK/dual-legacy-conflict"
 mkdir -p "$dual_project/scv"
+printf '# intake\n' >"$dual_project/scv/INTAKE.md"
 printf '# Claude truth\n' >"$dual_project/scv/CLAUDE.md"
 printf '# Codex truth\n' >"$dual_project/scv/CODEX.md"
 output="$(
@@ -221,24 +228,27 @@ assert_absent "$dual_project/scv/SCV.md" \
 failure_plugin="$WORK/failure-plugin"
 mkdir -p \
   "$failure_plugin/adapter/scripts" \
-  "$failure_plugin/adapter/template/scv" \
-  "$failure_plugin/vendor/scv-core/core/scripts"
+  "$failure_plugin/vendor/scv-core/core/scripts/lib"
 cp "$PLUGIN_ROOT/adapter/scripts/state-index.sh" \
   "$failure_plugin/adapter/scripts/state-index.sh"
 cp "$SYNC_SHIM" "$failure_plugin/adapter/scripts/sync.sh"
-cp "$PLUGIN_ROOT/adapter/template/scv/CODEX.md" \
-  "$failure_plugin/adapter/template/scv/CODEX.md"
-cp "$PLUGIN_ROOT/adapter/template/scv/CLAUDE.md" \
-  "$failure_plugin/adapter/template/scv/CLAUDE.md"
+cp "$PLUGIN_ROOT/adapter/host-profile.env" \
+  "$failure_plugin/adapter/host-profile.env"
+cp "$PLUGIN_ROOT/vendor/scv-core/core/scripts/state-index.sh" \
+  "$failure_plugin/vendor/scv-core/core/scripts/state-index.sh"
+cp "$PLUGIN_ROOT/vendor/scv-core/core/scripts/lib/host-profile.sh" \
+  "$failure_plugin/vendor/scv-core/core/scripts/lib/host-profile.sh"
 cat >"$failure_plugin/vendor/scv-core/core/scripts/sync.sh" <<'EOF'
 #!/usr/bin/env bash
 echo "INJECTED_CORE_SYNC_FAILURE" >&2
 exit 23
 EOF
 chmod +x "$failure_plugin/vendor/scv-core/core/scripts/sync.sh"
+chmod +x "$failure_plugin/vendor/scv-core/core/scripts/state-index.sh"
 
 failure_project="$WORK/core-sync-failure"
 mkdir -p "$failure_project/scv"
+printf '# intake\n' >"$failure_project/scv/INTAKE.md"
 printf '# existing Claude state\n\nPROJECT: LOCAL\nSTATUS: N/A\n' \
   >"$failure_project/scv/CLAUDE.md"
 failure_before="$(portable_sha256 "$failure_project/scv/CLAUDE.md")"
