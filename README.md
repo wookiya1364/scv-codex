@@ -216,7 +216,7 @@ auditable.
 Three versions intentionally move independently:
 
 - root/plugin `VERSION`: the Codex wrapper release, such as
-  `0.20.4-codex.1`;
+  `X.Y.Z-codex.N`;
 - `vendor/scv-core/VERSION`: shared behavior;
 - `vendor/scv-core/TEMPLATE_VERSION`: project files managed by hydrate/sync.
 

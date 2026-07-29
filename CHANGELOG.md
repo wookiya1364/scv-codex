@@ -2,6 +2,27 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.20.4-codex.2] — 2026-07-29
+
+### Fixed — identical cross-host state resolution
+
+- 공유 SCV Core를 `v0.20.6`으로 올리고 state index 판별·migration·pointer
+  finalization을 Core의 단일 구현으로 위임.
+- Claude가 만든 `# SCV host compatibility pointer`를 Codex가 active state로
+  오인하던 header 기반 판별을 제거하고, 양쪽 모두 정확한
+  `SCV:HOST-POINTER target=SCV.md` marker만 사용.
+- readable state와 `scv/INTAKE.md`가 있는 conflict는 hydrated project로
+  유지하면서 rc 4로 모든 변경을 차단. broken pointer는 양쪽 모두
+  `HYDRATED: no`로 fail-closed.
+
+### Verification
+
+- canonical/legacy/equal·divergent/broken-pointer 전체 matrix, no-mutation
+  inspect·dry-run, backup byte·mode, canonical no-replace, race revalidation,
+  Claude→Codex 및 Codex→Claude pointer round trip을 공통 Core 계약으로 검증.
+- Codex adapter는 argv를 그대로 전달하는 thin shim이며 독자 marker/resolver
+  로직을 포함하지 않도록 구조 회귀를 추가.
+
 ## [0.20.4-codex.1] — 2026-07-29
 
 ### Changed — immutable Core and external Deck runtime
