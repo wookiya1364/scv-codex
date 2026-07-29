@@ -2,6 +2,45 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.20.4-codex.1] — 2026-07-29
+
+### Changed — immutable Core and external Deck runtime
+
+- 공유 SCV Core를 공식 `v0.20.5` release에 고정. 설치된 plugin은 계속
+  self-contained이며 runtime network fetch를 하지 않음.
+- DeckUI의 `node_modules`, deckdoc `node_modules`, `dist-deck`, non-sample
+  generated `deck.json`을 immutable vendor 밖의
+  source-payload-SHA-256별 cache로 분리. 이전 Codex vendor와 ignored legacy
+  `plugins/scv/DeckUI` runtime은 stable FD snapshot에서 migration하며 원본은
+  수정하거나 삭제하지 않음. persistent plugin-root가 다른 host가 먼저 만든
+  cache와 충돌하면 cache 전체를 authoritative하게 유지하고 legacy source
+  전체를 건너뛰어 부분 혼합을 차단. 기존 vendor 복구 migration은 strict 유지.
+- migration 뒤 vendor swap이 실패해도 원본 vendor는 정확히 복구하고 이미
+  복사된 cache entry는 안전한 additive 상태로 유지.
+- Codex wrapper `0.20.4-codex.1`과 Core `0.20.5`의 독립 version stream을
+  검증하고, 자동 Core update가 wrapper version을 바꾸지 않도록 수정.
+
+### Hardened — maintainer Core updater
+
+- 기본 vendor 목적지만 허용하고 custom target은
+  `SCV_VENDOR_ALLOW_CUSTOM_TARGET=1`을 명시해야 함. manifest가 선언한 파일과
+  고정 metadata 외의 file, empty directory, link, hardlink, special file은
+  fail-closed로 거부.
+- adjacent PID/start-id/token owner lock, stale-lock quarantine, malformed
+  lock 및 orphan transaction 차단을 추가.
+- 열린 parent directory FD, verified byte/type/mode preimage, same-filesystem
+  no-replace rename으로 commit. target/stage/parent drift와 symlink 교체를
+  commit 직전에 다시 검증.
+- HUP/INT/TERM에는 이전 vendor를 정확히 rollback하고, commit된 old-backup
+  cleanup 구간에서는 signal을 지연해 partial deletion을 차단. SIGKILL이나
+  rollback collision은 recovery backup을 보존하고 후속 update를 차단.
+
+### Verification
+
+- 기존 release/provenance suite `23/23`, updater atomicity/race suite
+  `67/67`. adapter CI를 Ubuntu와 macOS matrix로 확장하고 automated core-sync
+  PR에도 두 suite를 모두 실행.
+
 ## [0.20.1-codex.1] — 2026-07-28
 
 ### Changed — shared SCV Core

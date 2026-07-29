@@ -212,12 +212,12 @@ model-policy만 소유하는 얇은 adapter입니다.
 
 버전 세 가지는 독립적으로 관리합니다.
 
-- root/plugin `VERSION`: `0.20.1-codex.1` 같은 Codex wrapper release
+- root/plugin `VERSION`: `0.20.4-codex.1` 같은 Codex wrapper release
 - `vendor/scv-core/VERSION`: 공유 동작
 - `vendor/scv-core/TEMPLATE_VERSION`: hydrate/sync가 관리하는 project 파일
 
 maintainer는 `bash tools/vendor-core.sh --source ../scv-core`로 local
-checkout을 시험하거나 `bash tools/vendor-core.sh --tag v0.20.1`으로
+checkout을 시험하거나 `bash tools/vendor-core.sh --tag vX.Y.Z`로
 checksum이 확인된 release를 고정할 수 있습니다.
 `bash tools/verify-core.sh`는 payload, lock, API 호환성, action catalog,
 adapter contract를 검사합니다. 정기 workflow는 `develop` 대상
@@ -225,6 +225,24 @@ adapter contract를 검사합니다. 정기 workflow는 `develop` 대상
 core release는 `scv-core-released` repository-dispatch event로 같은 검사를
 시작할 수도 있습니다. 기본값은 built-in token이며, Actions의 PR 생성이
 막힌 repo는 선택적으로 `SCV_CORE_SYNC_TOKEN` Actions secret을 설정합니다.
+
+Core vendoring은 기본적으로 이 저장소의 정확한 vendor 목적지만 허용합니다.
+테스트나 통제된 도구가 custom target을 쓰려면 명시적으로 opt-in해야 합니다.
+updater는 manifest/metadata와 정확히 일치하는 tree만 받고, byte/type/mode
+snapshot과 인접 owner lock을 유지하며, 열린 parent directory FD에서
+same-filesystem no-replace rename으로 commit합니다. 실패와 catchable signal은
+이전 tree를 정확히 복구합니다. rollback이 불완전하거나 process가 강제
+종료되면 복구 증거를 보존하고 다음 update를 차단합니다.
+
+Deck dependency, build, 생성된 deck JSON은 mutable runtime이므로 Core
+source-payload SHA-256을 key로 하는 외부 cache에 둡니다. 교체 전에는 이전
+vendor 또는 legacy `plugins/scv/DeckUI`의 허용된 runtime만 FD-stable
+snapshot에서 cache로 additive하게 복사합니다. 원본은 수정하거나 삭제하지
+않습니다. 이후 swap이 실패해도 이미 복사한 cache entry는 안전한 additive
+상태로 의도적으로 남습니다. 다른 host가 먼저 채운 cache와 persistent
+plugin-root source가 충돌하면 cache 전체를 authoritative하게 유지하고 legacy
+source 전체를 건너뛰어 cross-host 부분 혼합을 막습니다. 기존 vendor 복구는
+계속 strict하게 동작합니다.
 
 project의 canonical index는 `scv/SCV.md`입니다. 기존 `scv/CLAUDE.md`나
 `scv/CODEX.md`만 있는 project도 파일 생성 없이 그대로 읽습니다. legacy
