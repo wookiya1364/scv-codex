@@ -212,7 +212,7 @@ model-policy만 소유하는 얇은 adapter입니다.
 
 버전 세 가지는 독립적으로 관리합니다.
 
-- root/plugin `VERSION`: `0.20.4-codex.1` 같은 Codex wrapper release
+- root/plugin `VERSION`: `X.Y.Z-codex.N` 형태의 Codex wrapper release
 - `vendor/scv-core/VERSION`: 공유 동작
 - `vendor/scv-core/TEMPLATE_VERSION`: hydrate/sync가 관리하는 project 파일
 
