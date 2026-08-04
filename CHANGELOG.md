@@ -2,6 +2,26 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.21.0-codex.1] — 2026-08-04
+
+### Added — SCV Core 0.21.0 동기화
+
+- 공유 SCV Core를 `v0.21.0`으로 올림. 아래 변경은 전부 Core 소유이며 Codex
+  adapter seam과 14개 액션은 그대로다.
+- raw 문서 라이프사이클: promote Step 8이 사용한 원본을 `scv/raw/stale/`로
+  이동(내용 불변)하고 `scv/readpath.json` v2의 `ref_docs`에 어떤 계획(slug)
+  들이 사용했는지 누적 기록. `scv/raw/` 바로 아래 남은 파일 = 아직 승격에
+  쓰이지 않은 unused 문서. status가 unused/consumed 구분과
+  `OUTDATED-CANDIDATE`(소비 후 코드가 바뀐 문서)를 보여준다.
+- 기획서 deck의 mermaid 다이어그램 가시성 수정(테마 변수 보정 CSS + init
+  팔레트 정렬), 로컬 헤드리스 Chrome이 있으면 다이어그램을 인라인 SVG로
+  구워 오프라인에서도 완전한 렌더로 열린다(없으면 기존 CDN+폴백 유지).
+
+### 주의
+
+- 0.21.0 이전 래퍼의 `readpath.sh update`는 `ref_docs`를 제거한다. 같은
+  프로젝트를 Claude Code와 함께 쓰면 두 래퍼를 같이 업데이트할 것.
+
 ## [0.20.4-codex.2] — 2026-07-29
 
 ### Fixed — identical cross-host state resolution
