@@ -28,7 +28,7 @@ Start a new Codex chat or CLI session, then ask naturally:
 Use SCV to diagnose this project and tell me what to do next.
 ```
 
-Codex can invoke all 14 skills from natural language. `$scv:help` is an
+Codex can invoke all 15 skills from natural language. `$scv:help` is an
 optional exact selector; `/scv:help` is a Claude Code slash command and is not
 used here.
 
@@ -44,6 +44,7 @@ used here.
 | `$scv:deck [<md>]` | Render Markdown as a planning document or DeckUI slide deck. |
 | `$scv:update` | Read-only version check and Codex marketplace refresh guide. |
 | `$scv:regression` | Run test instructions from all current archive entries. |
+| `$scv:routine <name>` | List, lint, or run one maintenance routine defined under `scv/routines/`; scheduling stays host-owned. |
 | `$scv:report` | Report a phase result to configured Slack or Discord. |
 | `$scv:sync` | Merge templates and detect drift between active plans, code scope, and tests. |
 | `$scv:install-deps` | Detect CLIs and offer consent-gated installation help. |
@@ -70,6 +71,22 @@ diagnostic for legacy `SCV_MODEL_POLICY` values. It never translates Anthropic
 model names by guesswork or rewrites installed `SKILL.md` files. A durable
 `.codex/config.toml` edit requires an explicit request, capability verification,
 a preview, and confirmation.
+
+## Journal hook seam (Core 0.22.0+)
+
+Core 0.22.0 ships two hook templates
+(`vendor/scv-core/core/template/hooks/on-user-prompt.sh` and `on-stop.sh`)
+that capture free conversation into the committed team journal
+`scv/journal/`. Hook registration is wrapper/host-owned; this plugin
+intentionally declares no `hooks` manifest entry, and the Codex plugin
+surface does not deliver prompt text or a JSONL transcript path to
+plugin-projected commands. Registration on a Codex host is therefore a
+documented user action — see
+[`references/journal-hooks.md`](references/journal-hooks.md) for the event
+mapping, stdin JSON contract, `SCV_CORE_ROOT` export, and the non-blocking
+and redaction guarantees. Where the host provides no JSONL transcript, the
+turn-end registration is omitted; the seam contract allows this partial
+implementation, and that gap applies to this wrapper today.
 
 ## Safety and updates
 
