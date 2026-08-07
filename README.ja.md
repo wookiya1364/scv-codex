@@ -111,6 +111,7 @@ archive は墓場ではありません。6 か月後、誰も覚えていない�
 | `$scv:deck [<md>]` | 不足した事実を捏造せず、Markdown を self-contained 企画文書または DeckUI slide に変換。 |
 | `$scv:update` | インストール版と release を比較し、Codex marketplace 更新コマンドを案内する read-only 検査。 |
 | `$scv:regression` | obsolete でない全 archive の実行可能テスト手順を回帰 suite として実行。 |
+| `$scv:routine <name>` | `scv/routines/` に定義された maintenance routine を 1 件実行、一覧表示（`--list`）、検査（`--lint <file>`）。スケジュール登録は常に host 所有。 |
 | `$scv:report` | 明示的に設定された Slack または Discord 宛先へフェーズ結果を投稿。 |
 | `$scv:sync` | 新しい SCV template を標準文書へ merge し、active plan・code scope・test 間の drift を検出。 |
 | `$scv:install-deps` | 必須/任意 CLI を検出し、同意を得てインストール方法を案内。 |
@@ -185,6 +186,11 @@ Confluence、Google Docs、Notion の資料はコピーせず `refs:` でリン�
 固定できます。未指定なら直近のユーザーメッセージに従い、判定できなければ
 英語へ fallback します。
 
+Core 0.22.0 は journal hook seam を追加します: vendored template 2 種が
+自由会話を `scv/journal/` へ記録します。登録は host 所有で、
+[`plugins/scv/references/journal-hooks.md`](plugins/scv/references/journal-hooks.md)
+に文書化されています。plugin 自体は hook を一切登録しません。
+
 ## 更新
 
 `$scv:update` で read-only の version check を実行します。明示的に
@@ -203,7 +209,7 @@ codex plugin add scv@scv-codex
 
 SCV の共通動作は
 [scv-core](https://github.com/wookiya1364/scv-core) にあります。この
-repository は 14 個の Codex skill、host capability mapping、Codex 固有の
+repository は 15 個の Codex skill、host capability mapping、Codex 固有の
 update と model-policy だけを所有する thin adapter です。
 
 各 plugin release は検証済み core を
