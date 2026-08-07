@@ -110,6 +110,7 @@ repository's actual state.
 | `$scv:deck [<md>]` | Turn Markdown into a self-contained planning document or a DeckUI slide presentation without inventing missing facts. |
 | `$scv:update` | Compare installed and released versions and show the Codex marketplace refresh commands; read-only. |
 | `$scv:regression` | Run the executable test instructions from every non-obsolete archive entry. |
+| `$scv:routine <name>` | List (`--list`), lint (`--lint <file>`), or run one maintenance routine defined under `scv/routines/`; scheduling stays host-owned. |
 | `$scv:report` | Post a phase result to an explicitly configured Slack or Discord destination. |
 | `$scv:sync` | Merge newer SCV templates into standard docs and detect drift between active plans, code scope, and tests. |
 | `$scv:install-deps` | Detect required and optional CLIs and offer consent-gated installation guidance. |
@@ -187,6 +188,11 @@ Set `SCV_LANG=en|ko|ja` in the project `.env` to choose durable generated
 language. Without it, SCV follows the latest user message and falls back to
 English.
 
+Core 0.22.0 adds a journal hook seam: two vendored templates capture free
+conversation into `scv/journal/`. Registration is host-owned and documented
+in [`plugins/scv/references/journal-hooks.md`](plugins/scv/references/journal-hooks.md);
+the plugin itself registers no hooks.
+
 ## Updating
 
 Run `$scv:update` for a read-only version check. To refresh explicitly:
@@ -204,7 +210,7 @@ want to merge newer templates.
 
 SCV behavior lives in
 [scv-core](https://github.com/wookiya1364/scv-core). This repository is the
-thin Codex adapter: it packages 14 Codex skills, maps host capabilities, and
+thin Codex adapter: it packages 15 Codex skills, maps host capabilities, and
 owns only Codex-specific update and model-policy behavior.
 
 Every plugin release includes a pinned, self-contained core under
