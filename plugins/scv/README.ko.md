@@ -28,7 +28,7 @@ codex plugin add scv@scv-codex
 SCV로 이 프로젝트 상태를 진단하고 다음 할 일을 알려줘.
 ```
 
-14개 skill 모두 자연어로 호출할 수 있습니다. `$scv:help`는 정확한 skill을
+15개 skill 모두 자연어로 호출할 수 있습니다. `$scv:help`는 정확한 skill을
 고르는 선택적 selector이고, `/scv:help`는 Claude Code slash command라서
 여기서는 사용하지 않습니다.
 
@@ -44,6 +44,7 @@ SCV로 이 프로젝트 상태를 진단하고 다음 할 일을 알려줘.
 | `$scv:deck [<md>]` | Markdown을 기획 문서 또는 DeckUI slide deck으로 렌더링. |
 | `$scv:update` | read-only 버전 검사와 Codex marketplace 갱신 안내. |
 | `$scv:regression` | 유효한 모든 archive의 테스트 지시 실행. |
+| `$scv:routine <name>` | `scv/routines/`에 정의된 유지보수 루틴 1개 실행, 목록(`--list`), 검사(`--lint <file>`). 스케줄 등록은 host 소유. |
 | `$scv:report` | 설정된 Slack 또는 Discord에 단계 결과 보고. |
 | `$scv:sync` | template 병합과 active plan·code scope·test 사이 drift 탐지. |
 | `$scv:install-deps` | CLI 탐지와 동의 기반 설치 지원. |
@@ -69,6 +70,20 @@ model을 pin할 수 없습니다. 따라서 `$scv:set-models`는 이전
 model 이름을 추측으로 치환하거나 설치된 `SKILL.md`를 수정하지 않습니다.
 영구 `.codex/config.toml` 변경에는 명시적 요청, 지원 여부 확인, preview,
 확인이 필요합니다.
+
+## Journal 훅 seam (Core 0.22.0+)
+
+Core 0.22.0은 자유대화를 커밋되는 팀 journal(`scv/journal/`)로 캡처하는
+훅 템플릿 2종(`vendor/scv-core/core/template/hooks/on-user-prompt.sh`,
+`on-stop.sh`)을 포함합니다. 훅 등록은 wrapper/host 소유이며, 이 plugin은
+의도적으로 `hooks` manifest 항목을 선언하지 않습니다. 또한 Codex plugin
+표면은 프롬프트 원문이나 JSONL transcript 경로를 plugin 명령에 전달하지
+않으므로, Codex host에서의 등록은 문서화된 사용자 행동입니다 — 이벤트
+매핑, stdin JSON 계약, `SCV_CORE_ROOT` export, non-blocking·redaction
+보장은 [`references/journal-hooks.md`](references/journal-hooks.md)를
+참조하세요. host가 JSONL transcript를 제공하지 않으면 turn-end 등록은
+생략합니다. seam 계약은 이 부분 구현을 허용하며, 현재 이 wrapper가 그
+격차에 해당합니다.
 
 ## 안전과 업데이트
 

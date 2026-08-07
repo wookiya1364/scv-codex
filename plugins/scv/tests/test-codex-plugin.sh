@@ -20,6 +20,7 @@ EXPECTED_SKILLS=(
   promote
   regression
   report
+  routine
   set-models
   status
   sync
@@ -207,7 +208,7 @@ mapfile -t actual_skills < <(
     | sort
 )
 if [[ "${actual_skills[*]}" == "${EXPECTED_SKILLS[*]}" ]]; then
-  ok "skill set exactly matches the 14 core actions"
+  ok "skill set exactly matches the 15 core actions"
 else
   fail "skill set mismatch: ${actual_skills[*]}"
 fi
@@ -261,7 +262,7 @@ plugin = Path(sys.argv[2])
 actions = actions_doc.get("actions", actions_doc)
 if isinstance(actions, dict):
     actions = [{"id": key, **value} for key, value in actions.items()]
-assert len(actions) == 14
+assert len(actions) == 15
 catalog = {item["id"]: item for item in actions}
 assert set(catalog) == {path.name for path in (plugin / "skills").iterdir() if path.is_dir()}
 for name, action in catalog.items():
