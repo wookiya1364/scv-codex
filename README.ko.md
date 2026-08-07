@@ -112,6 +112,7 @@ archive는 묘지가 아닙니다. 6개월 뒤 아무도 기억하지 못하는 
 | `$scv:deck [<md>]` | 빠진 사실을 지어내지 않고 Markdown을 self-contained 기획 문서 또는 DeckUI 슬라이드로 변환. |
 | `$scv:update` | 설치 버전과 릴리스를 비교하고 Codex marketplace 갱신 명령을 안내하는 read-only 검사. |
 | `$scv:regression` | obsolete가 아닌 모든 archive의 실행 가능한 테스트 지시를 회귀 suite로 실행. |
+| `$scv:routine <name>` | `scv/routines/`에 정의된 유지보수 루틴 1개를 실행하거나 목록(`--list`)·검사(`--lint <file>`). 스케줄 등록은 항상 host 소유. |
 | `$scv:report` | 명시적으로 설정된 Slack 또는 Discord 목적지에 단계 결과 게시. |
 | `$scv:sync` | 새 SCV template을 표준 문서에 병합하고 active plan, 코드 scope, 테스트 사이 drift 탐지. |
 | `$scv:install-deps` | 필수/선택 CLI를 탐지하고 동의를 거쳐 설치 안내. |
@@ -185,6 +186,11 @@ Google Docs, Notion 자료는 복사하지 않고 `refs:`로 연결합니다. PR
 고정합니다. 없으면 최신 사용자 메시지의 언어를 따르고, 판단할 수 없으면
 영어를 사용합니다.
 
+Core 0.22.0은 journal 훅 seam을 추가합니다: 벤더링된 템플릿 2종이
+자유대화를 `scv/journal/`로 캡처합니다. 등록은 host 소유이며
+[`plugins/scv/references/journal-hooks.md`](plugins/scv/references/journal-hooks.md)에
+문서화되어 있습니다. plugin 자체는 어떤 훅도 등록하지 않습니다.
+
 ## 업데이트
 
 `$scv:update`로 read-only 버전 검사를 실행합니다. 명시적으로 갱신하려면:
@@ -202,7 +208,7 @@ codex plugin add scv@scv-codex
 
 SCV 공통 동작은
 [scv-core](https://github.com/wookiya1364/scv-core)에 있습니다. 이
-저장소는 14개 Codex skill과 host capability mapping, Codex 전용 update 및
+저장소는 15개 Codex skill과 host capability mapping, Codex 전용 update 및
 model-policy만 소유하는 얇은 adapter입니다.
 
 모든 plugin release는 `plugins/scv/vendor/scv-core/`에 검증된 core를 고정해

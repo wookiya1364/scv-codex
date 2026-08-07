@@ -251,8 +251,8 @@ else:
 
 skill_names = sorted(path.parent.name for path in plugin.glob("skills/*/SKILL.md"))
 action_names = sorted(actions)
-if len(action_names) != 14:
-    raise SystemExit(f"expected 14 core actions, got {len(action_names)}")
+if len(action_names) != 15:
+    raise SystemExit(f"expected 15 core actions, got {len(action_names)}")
 if action_names != skill_names:
     raise SystemExit(f"skill/action mismatch: actions={action_names}, skills={skill_names}")
 

@@ -27,7 +27,7 @@ codex plugin add scv@scv-codex
 SCV でこのプロジェクトを診断し、次にすることを教えて。
 ```
 
-14 個の skill はすべて自然言語で呼び出せます。`$scv:help` は正確な
+15 個の skill はすべて自然言語で呼び出せます。`$scv:help` は正確な
 skill を選ぶ任意の selector で、`/scv:help` は Claude Code の
 slash-command なのでここでは使用しません。
 
@@ -43,6 +43,7 @@ slash-command なのでここでは使用しません。
 | `$scv:deck [<md>]` | Markdown を企画文書または DeckUI slide deck として render。 |
 | `$scv:update` | read-only version check と Codex marketplace 更新案内。 |
 | `$scv:regression` | 有効な全 archive のテスト手順を実行。 |
+| `$scv:routine <name>` | `scv/routines/` の maintenance routine を 1 件実行、一覧（`--list`）、検査（`--lint <file>`）。スケジュール登録は host 所有。 |
 | `$scv:report` | 設定済み Slack または Discord へフェーズ結果を報告。 |
 | `$scv:sync` | template merge と active plan・code scope・test 間の drift 検出。 |
 | `$scv:install-deps` | CLI 検出と同意ベースの install 支援。 |
@@ -69,6 +70,21 @@ host の差が一つあります。Codex plugin skill は skill ごとに異な�
 model 名を推測で変換したり、インストール済み `SKILL.md` を変更したり
 しません。永続的な `.codex/config.toml` 変更には明示的依頼、対応確認、
 preview、確認が必要です。
+
+## Journal hook seam (Core 0.22.0+)
+
+Core 0.22.0 は自由会話をコミットされる team journal（`scv/journal/`）へ
+記録する hook template 2 種
+（`vendor/scv-core/core/template/hooks/on-user-prompt.sh`、`on-stop.sh`）
+を同梱します。hook 登録は wrapper/host 所有で、この plugin は意図的に
+`hooks` manifest 項目を宣言しません。Codex plugin 表面は prompt 原文や
+JSONL transcript path を plugin コマンドへ渡さないため、Codex host での
+登録は文書化されたユーザー操作です — イベント対応、stdin JSON 契約、
+`SCV_CORE_ROOT` export、non-blocking・redaction 保証は
+[`references/journal-hooks.md`](references/journal-hooks.md) を参照して
+ください。host が JSONL transcript を提供しない場合、turn-end 登録は
+省略します。seam 契約はこの部分実装を許容し、現在この wrapper がその
+ギャップに該当します。
 
 ## 安全性と更新
 
