@@ -2,6 +2,35 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.22.0-codex.1] — 2026-08-07
+
+### Added — SCV Core 0.22.0 동기화 (scv-simplification epic)
+
+- 공유 SCV Core를 `v0.22.0`(Template 2.0.0)으로 올리고 15번째 액션
+  `$scv:routine`을 등록(액션 계약 14 → 15). 루틴 카탈로그·lint·실행
+  프로토콜은 다른 액션과 같은 projection 규칙을 따르며, 스케줄 등록은
+  호스트 소유로 유지된다(래퍼에는 안내 텍스트만, crontab/systemctl/
+  launchctl 등록 코드 없음).
+- **BREAKING**: 표준 문서 7종(INTAKE/DOMAIN/RALPH_PROMPT/AGENTS/
+  ARCHITECTURE/DESIGN/TESTING) 폐기. sync가 기존 프로젝트에서 해당
+  파일을 삭제한다 — 버전 게이트 1회성 마이그레이션(2.x 미만 template
+  스탬프에만 실행, 심링크된 `scv/`는 건너뜀), 복구 경로는 git history.
+  hydration 기준 파일은 `scv/INTAKE.md` → `scv/PROMOTE.md`로 이동.
+- guardrails-first PLAN 문법: 바꾸지 않을 것(guardrails)을 먼저 선언하고
+  변경을 서술한다.
+- 작성자별 팀 저널(`scv/journal/<YYYYMMDD>-<author>.md`) + DECISIONS/TODO
+  표준 문서, 내장 redaction(비밀값은 `[REDACTED]`로 기록, 원문은 디스크에
+  남지 않음). SCV:GUIDANCE 마커와 `SCV_GUIDANCE=minimal` 지원.
+- 훅 자동 등록은 Codex plugin 표면 한계로 문서화까지
+  (`references/journal-hooks.md`: 이벤트 매핑, stdin JSON 계약,
+  `SCV_CORE_ROOT`, non-blocking·redaction 보장).
+
+### 주의
+
+- 같은 프로젝트를 Claude Code와 함께 쓰는 팀은 두 래퍼를 함께
+  업데이트할 것. 0.22.0 이전 래퍼는 폐기된 표준 문서와 이전 hydration
+  기준을 여전히 기대한다.
+
 ## [0.21.0-codex.1] — 2026-08-04
 
 ### Added — SCV Core 0.21.0 동기화
