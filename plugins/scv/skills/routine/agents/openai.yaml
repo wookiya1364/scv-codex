@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Routine"
+  short_description: "List or run one defined SCV maintenance routine"
+  default_prompt: "Use $scv:routine to list or run a defined SCV maintenance routine."
+
+policy:
+  allow_implicit_invocation: true
