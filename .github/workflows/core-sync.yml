@@ -2,7 +2,10 @@ name: Check and vendor latest SCV Core
 
 on:
   schedule:
-    - cron: "23 1 * * 1"
+    # Daily, matching scv-claude-code. This is only the fallback for a missed
+    # repository_dispatch, but a weekly cadence made that fallback up to seven
+    # days slow while the sibling wrapper recovered within a day.
+    - cron: "23 1 * * *"
   repository_dispatch:
     types: [scv-core-released]
   workflow_dispatch:
@@ -36,7 +39,11 @@ jobs:
         id: release
         env:
           GH_TOKEN: ${{ secrets.SCV_CORE_SYNC_TOKEN || github.token }}
-          REQUESTED_TAG: ${{ inputs.core_tag || github.event.client_payload.core_tag || '' }}
+          # `tag` is the key scv-core's release workflow actually publishes; see
+          # the repository_dispatch payload contract in the vendored
+          # docs/wrapper-integration.md. `core_tag` remains the manual
+          # workflow_dispatch input name and is unrelated to that contract.
+          REQUESTED_TAG: ${{ inputs.core_tag || github.event.client_payload.tag || '' }}
         run: |
           set -euo pipefail
           tag="$REQUESTED_TAG"
@@ -48,6 +55,12 @@ jobs:
             *) tag="v$tag" ;;
           esac
           version="${tag#v}"
+          # Validate before the value reaches vendor-core.sh --tag. The sibling
+          # wrapper applies the same pattern to its resolved version.
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Refusing an unexpected scv-core tag: ${tag}" >&2
+            exit 1
+          fi
           current="$(
             python3 -c 'import json, pathlib; p = pathlib.Path("plugins/scv/vendor/scv-core/core.lock.json"); print(json.loads(p.read_text())["core_version"] if p.exists() else "")'
           )"
