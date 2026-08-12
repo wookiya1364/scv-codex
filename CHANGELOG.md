@@ -2,6 +2,32 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.23.0-codex.1] — 2026-08-12
+
+### Fixed — Core 릴리스 알림 수신
+
+- `core-sync.yml` 이 `client_payload.core_tag` 를 읽고 있었으나 그 키는 Core 계약에
+  없다. Core 가 보내는 키는 `version` / `tag` / `asset_url` / `checksum_url` 넷이다.
+  요청 태그가 항상 비어 있어 매 실행이 최신 릴리스를 재조회하는 폴백으로 동작했다.
+  계약에 없는 키를 Core 가 맞춰 보내게 하는 대신 래퍼가 계약에 맞췄다.
+- 해석된 버전에 semver 검증을 추가했다. 이 경로는 값을 받은 적이 없어 미검증인
+  채였고, 값이 `vendor-core.sh --tag` 로 직행한다.
+
+### Changed — 폴링 주기
+
+- `schedule` 을 주 1회에서 매일로 바꿨다. sibling wrapper 는 매일인데 여기만
+  주간이라, 알림을 놓쳤을 때 폴백이 최대 7일 걸렸다.
+
+### Added — SCV Core 0.23.0 동기화
+
+- 결정 로그 실작동 — 아카이브 엔트리에 `path delta:` 추가. 계획이 제시한 경로와
+  실제로 간 경로의 차이를 기록한다.
+- 구현 원칙 4종 — 재활용 우선 / 최소 구현 / 관심사 분리 / 되돌리기 비싼 결정은
+  장기 관점. PLAN 의 `Guardrails` 가 우선한다.
+- 쉬운 말 먼저 — 프로토콜 13개에 사용자 대상 출력 규칙 추가.
+- `check-frontmatter` 가 계획서를 계획서 스키마로 검사한다.
+- Core 릴리스 알림 실패 시 릴리스 run 이 빨간불. 주 1회 토큰 헬스체크 추가.
+
 ## [0.22.0-codex.1] — 2026-08-07
 
 ### Added — SCV Core 0.22.0 동기화 (scv-simplification epic)
