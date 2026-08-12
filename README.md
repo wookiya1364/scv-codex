@@ -95,6 +95,40 @@ The archive is not a graveyard. Six months later, a test written for a feature
 that nobody remembers can still catch a regression. The longer the team uses
 SCV, the stronger that safety net becomes.
 
+### What the archive keeps besides the tests (Core 0.23.0+)
+
+A plan says which route to take. `$scv:work` may take a better one when it finds
+it — so the interesting question later is not what the plan said, but where the
+work went instead, and why.
+
+Archiving appends that to `scv/DECISIONS.md`:
+
+```markdown
+## [2026-08-12 10:49] sspark — Refund flow archived
+
+- verdict: archived
+- why: what this plan decided, and what the implementation taught us
+- path delta: switched from a queue to a direct call — the queue only
+  mattered for retries, and the API is already idempotent
+- refs: scv/archive/20260812-sspark-refund-flow/PLAN.md
+```
+
+`path delta` is the line that would otherwise vanish with the session. When the
+route matched the plan, it is one word: `as planned`.
+
+### How `$scv:work` decides (Core 0.23.0+)
+
+Four defaults apply while implementing, unless the plan's `Guardrails` say
+otherwise: reuse what the codebase already has rather than adding a second way
+to do the same thing; choose the simplest implementation that fully satisfies
+the current requirement; keep one clear concern per component; and decide for
+the long term where a decision is costly to reverse — data model, module
+boundaries, published contracts.
+
+SCV also leads with the short explanation. A plan you cannot follow cannot be
+approved, so questions, plans, and progress reports start plain and go deeper
+when you ask.
+
 ## Skills
 
 You do not need to memorize this table; `$scv:help` routes you from the
@@ -192,6 +226,15 @@ Core 0.22.0 adds a journal hook seam: two vendored templates capture free
 conversation into `scv/journal/`. Registration is host-owned and documented
 in [`plugins/scv/references/journal-hooks.md`](plugins/scv/references/journal-hooks.md);
 the plugin itself registers no hooks.
+
+Since Core 0.23.0 that journal is **gitignored by default**. Two records, two
+policies: `scv/conversations/` keeps the dialogs that became plans and is
+committed, because the reasoning behind a plan belongs with the plan. The
+journal is fed *every* prompt, including the ones that never became anything,
+and whether that belongs in a repository depends on who can read it. To share
+it, drop `scv/journal/` from `.gitignore` — but look at what has accumulated
+first, because redaction is a heuristic. Once committed, restoring the ignore
+rule does not untrack the files.
 
 ## Updating
 
