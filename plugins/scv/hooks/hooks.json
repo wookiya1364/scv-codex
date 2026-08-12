@@ -1,0 +1,27 @@
+{
+  "description": "SCV workspace guard. Deliberately blocking: it denies writes that no SCV action accounts for. Loaded from the plugin-root default path, so .codex-plugin/plugin.json declares no hooks key. The guard fails open on internal error and is inert in projects that have not adopted SCV. See plugins/scv/vendor/scv-core/core/contracts/guard.md.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|shell|local_shell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SCV_GUARD_MODE=gate-bash SCV_GUARD_SCRIPTS=\"${CODEX_PLUGIN_ROOT}/vendor/scv-core/core/scripts\" bash \"${CODEX_PLUGIN_ROOT}/vendor/scv-core/core/template/hooks/guard.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "apply_patch|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SCV_GUARD_MODE=gate-write SCV_GUARD_EXEMPT=\".codex/config.toml\" bash \"${CODEX_PLUGIN_ROOT}/vendor/scv-core/core/template/hooks/guard.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
