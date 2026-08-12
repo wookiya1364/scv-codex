@@ -322,6 +322,10 @@ feat/* · fix/* · docs/* · chore/* · refactor/* · test/*
 完全な方針は [`.github/BRANCHING.md`](./.github/BRANCHING.md) を参照して
 ください。
 
+このチェーンを手作業で歩くことはありません。`gh workflow run promote.yml` が
+各 PR を開き、チェックを待って merge し、タグとリリースまで作ります —
+**[docs/RELEASING.md](docs/RELEASING.md)** がその手順です。
+
 ## 起源とライセンス
 
 SCV for Codex と
