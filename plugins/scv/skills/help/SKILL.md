@@ -1,6 +1,6 @@
 ---
 name: help
-description: "Diagnose an SCV-enabled repository, hydrate SCV when requested, search archived work, and recommend the next workflow action. Use when the user asks how to start SCV, what to do next, where past work went, or invokes $scv:help."
+description: "Diagnose an SCV-enabled repository, hydrate SCV when requested, search archived work, and recommend the next workflow action. Use when the user asks how to start SCV, what to do next, where past work went, or invokes $scv:help. Never answer 'what should we work on' from memory instead of running this; it reads the project's real state and persists the conversation."
 ---
 
 # SCV Help
