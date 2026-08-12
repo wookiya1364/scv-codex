@@ -2,6 +2,19 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.24.0-codex.1] — 2026-08-12
+
+### Added — 원버튼 승격
+
+- `promote.yml` 이 `develop → stage → main` 을 각각 PR 로 열고 체크를 기다린 뒤
+  병합하고, `VERSION` 을 읽어 태그와 릴리스를 만든다. `workflow_dispatch` 전용.
+
+### Added — SCV Core 0.24.0 동기화
+
+- CI 를 3분 30초에서 30초대로 (`test-deck-runtime.sh` 의 플레이키한 30초 대기와
+  과한 경쟁 창).
+- `scv/journal` 기본 gitignore — 훅이 자유대화까지 받아쓰므로 올릴지는 사용자 선택.
+
 ## [0.23.0-codex.1] — 2026-08-12
 
 ### Fixed — Core 릴리스 알림 수신
