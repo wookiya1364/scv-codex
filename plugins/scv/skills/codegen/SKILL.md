@@ -1,6 +1,6 @@
 ---
 name: codegen
-description: "Implement an SCV promote plan with test-first Red-Green-Refactor iterations, per-case retry budgets, scope guards, and invariant checks. Use when TESTS.md should drive implementation or the user invokes $scv:codegen."
+description: "Implement an SCV promote plan with test-first Red-Green-Refactor iterations, per-case retry budgets, scope guards, and invariant checks. Use when TESTS.md should drive implementation or the user invokes $scv:codegen. Never hand-roll the red/green loop instead of running this."
 ---
 
 # SCV Codegen
