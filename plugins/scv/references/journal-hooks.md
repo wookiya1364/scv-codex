@@ -15,13 +15,23 @@ ownership boundary as `update` and `set-models`).
 
 ## Current status in this wrapper
 
-The self-contained Codex plugin intentionally declares **no `hooks` entry** in
-`.codex-plugin/plugin.json` (the plugin contract test enforces its absence),
-and the Codex plugin surface does not deliver prompt text or a JSONL
-transcript path to plugin-projected commands. Registration on a Codex host is
-therefore a **user/host action documented here**, not an automatic plugin
-projection. This is the gap the handoff contract asks the wrapper README to
-state:
+The plugin declares **no `hooks` entry** in `.codex-plugin/plugin.json`, and the
+contract test enforces that absence — but this is a packaging choice, not a
+limitation. Verified on codex-cli 0.146.1: a `hooks/hooks.json` at the plugin
+root loads from the **default path** with no manifest key at all, and
+`SessionStart` and `UserPromptSubmit` both fired from it. An earlier version of
+this page said Codex registration could only be a manual user action. That was
+wrong, and the workspace guard now ships registered this way.
+
+A `PreToolUse` hook can also **deny** a tool call on Codex — reproduced on the
+same version, where a hook returning `permissionDecision: "deny"` stopped an
+`apply_patch` and the file was never created. Note the payload shape: Codex
+delivers a patch as one command string with no `file_path` field, so a guard has
+to read the target out of the patch text.
+
+What remains genuinely host-dependent is the **journal** pair, because the Codex
+plugin surface does not hand prompt text or a JSONL transcript path to
+plugin-projected commands:
 
 - **user-prompt path**: register manually where your Codex host lets you run
   a command at prompt-submit time and can hand the adapter the prompt text.
