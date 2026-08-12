@@ -5,16 +5,22 @@ keeps every release identical.
 
 ## The procedure
 
+`<version>` below is whatever you are releasing — `0.25.0-codex.1`,
+`0.25.0-codex.2`, `1.0.0-codex.1`. Substitute it in all three commands. Nothing
+here is fixed to a particular number.
+
 ```bash
+VERSION=<version>       # e.g. VERSION=0.25.0-codex.1
+
 # 1. Bump the wrapper version. This touches VERSION, plugins/scv/VERSION, and
 #    plugins/scv/.codex-plugin/plugin.json at once.
-bash tools/set-wrapper-version.sh 0.25.0-codex.1
+bash tools/set-wrapper-version.sh "$VERSION"
 
-# 2. Add the CHANGELOG entry and docs/releases/0.25.0-codex.1.md, then open a
+# 2. Add the CHANGELOG entry and docs/releases/$VERSION.md, then open a
 #    pull request into `develop` and merge it.
 
 # 3. Promote, tag, and publish.
-gh workflow run promote.yml -f notes_file=docs/releases/0.25.0-codex.1.md
+gh workflow run promote.yml -f notes_file="docs/releases/$VERSION.md"
 ```
 
 That is the whole thing. Step 3 opens `develop → stage` and `stage → main` as
@@ -55,10 +61,14 @@ one run.
 ## Options
 
 ```bash
-gh workflow run promote.yml                                   # promote, tag, release
-gh workflow run promote.yml -f release=false                  # promote only, no tag
-gh workflow run promote.yml -f notes_file=docs/releases/X.md  # hand-written notes
+gh workflow run promote.yml                       # promote, tag, release
+gh workflow run promote.yml -f release=false      # promote only, no tag
+gh workflow run promote.yml \
+  -f notes_file=docs/releases/<version>.md        # hand-written notes
 ```
+
+The tag always comes from whatever `VERSION` holds on `main` — the workflow takes
+no version argument, so there is nothing to keep in sync by hand.
 
 Without `notes_file` the release notes are generated from the commits.
 
