@@ -1,6 +1,6 @@
 ---
 name: work
-description: "Implement an active SCV promote plan, run its tests, handle regression and supersedes, archive with approval, and prepare a PR or MR. Use when the user asks to execute a PLAN.md or invokes $scv:work."
+description: "Implement an active SCV promote plan, run its tests, handle regression and supersedes, archive with approval, and prepare a PR or MR. Use when the user asks to execute a PLAN.md or invokes $scv:work. Never implement a promote plan by editing files directly instead of running this; this skill loads the plan, runs its TESTS, and records what actually changed."
 ---
 
 # SCV Work
