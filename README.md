@@ -324,6 +324,10 @@ feat/* · fix/* · docs/* · chore/* · refactor/* · test/*
 
 See [`.github/BRANCHING.md`](./.github/BRANCHING.md) for the full policy.
 
+Nobody walks that chain by hand. `gh workflow run promote.yml` opens each pull
+request, waits for its checks, merges, then tags and publishes —
+**[docs/RELEASING.md](docs/RELEASING.md)** is the procedure.
+
 ## Origin and license
 
 SCV for Codex and

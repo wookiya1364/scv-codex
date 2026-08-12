@@ -315,6 +315,10 @@ feat/* · fix/* · docs/* · chore/* · refactor/* · test/*
 
 전체 정책은 [`.github/BRANCHING.md`](./.github/BRANCHING.md)를 참고하세요.
 
+이 사슬을 손으로 걷지 않습니다. `gh workflow run promote.yml` 이 각 PR 을 열고
+체크를 기다린 뒤 병합하고, 태그와 릴리스까지 만듭니다 —
+**[docs/RELEASING.md](docs/RELEASING.md)** 가 그 절차입니다.
+
 ## 기원과 라이선스
 
 SCV for Codex와
