@@ -139,14 +139,36 @@ jobs:
         run: |
           set -euo pipefail
           branch="chore/core-${CORE_VERSION}"
+          BOT_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Read the remote tip BEFORE fetching. --force-with-lease with no
+          # explicit value compares against the remote-tracking ref, so fetching
+          # first refreshes the very thing the lease checks — leaving a plain
+          # --force wearing a safer name.
+          remote_sha="$(git ls-remote --heads origin "$branch" | cut -f1)"
+
+          # Ask about the PR on every path, not only when the tree differs.
+          open_pr="$(gh pr list --base develop --head "$branch" --state open \
+            --json url --jq '.[0].url // ""')"
+          declined_pr="$(gh pr list --base develop --head "$branch" --state closed \
+            --json url,state --jq '[.[] | select(.state == "CLOSED")] | .[0].url // ""')"
+
+          # A closed (not merged) PR is a maintainer declining this upgrade. The
+          # branch survives a close, so without this the next run rebuilds and
+          # re-proposes it, and declining never sticks.
+          if [[ -n "$declined_pr" && -z "$open_pr" ]]; then
+            echo "::notice::${CORE_VERSION} was declined ($declined_pr). Delete $branch to propose it again."
+            exit 0
+          fi
+
           git add plugins/scv tools
 
-          # A sync must only move the vendored payload forward. If building it
-          # removed anything outside that tree, stop rather than propose a PR
-          # that deletes repository files — a stale branch once would have taken
-          # plugins/scv/hooks/hooks.json, the guard registration itself, with it.
-          stray_deletes=$(git diff --cached --name-only --diff-filter=D \
-            | grep -v '^plugins/scv/vendor/scv-core/' || true)
+          # This wrapper vendors into one tree and materialises nothing outside
+          # it, so a deletion elsewhere really is a fault. (The Claude wrapper
+          # projects core into seven more trees and deletes there by design — the
+          # same guard belongs only here.)
+          stray_deletes="$(git diff --cached --name-only --diff-filter=D \
+            | grep -v '^plugins/scv/vendor/scv-core/' || true)"
           if [[ -n "$stray_deletes" ]]; then
             echo "::error::Core sync would delete files outside the vendored payload:" >&2
             printf '%s\n' "$stray_deletes" >&2
@@ -154,34 +176,39 @@ jobs:
           fi
 
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "$BOT_EMAIL"
           git switch -c "$branch"
           git commit -m "chore: vendor scv-core ${CORE_VERSION}"
 
-          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+          if [[ -z "$remote_sha" ]]; then
+            git push origin "$branch"
+          else
             git fetch --quiet origin \
               "refs/heads/$branch:refs/remotes/origin/$branch"
-            if git diff --quiet "origin/$branch" HEAD; then
-              pr_url="$(gh pr list --base develop --head "$branch" --state open \
-                --json url --jq '.[0].url // ""')"
-              [[ -n "$pr_url" ]] && echo "Existing core update PR: $pr_url"
+            if ! git diff --quiet "origin/$branch" HEAD; then
+              # Rebuild a branch cut from an older develop. Refuse if anyone but
+              # this bot last touched it — a maintainer resolving a conflict on
+              # that branch must not be overwritten.
+              tip_author="$(git log -1 --format='%ae' "origin/$branch")"
+              if [[ "$tip_author" != "$BOT_EMAIL" ]]; then
+                echo "::error::$branch was last pushed by $tip_author, not this job. Refusing to force-push over someone else's work; resolve it by hand or delete the branch." >&2
+                exit 1
+              fi
+              if ! git push --force-with-lease="refs/heads/$branch:$remote_sha" origin "$branch"; then
+                echo "::error::Could not refresh $branch — the remote moved after this run read it. Re-run the workflow." >&2
+                exit 1
+              fi
+              echo "::notice::Refreshed $branch onto current develop."
+            fi
+            # Whether or not the tree moved, an open PR means there is nothing
+            # left to open. No open PR falls through to gh pr create below, which
+            # is the recovery path for a branch whose PR creation once failed.
+            if [[ -n "$open_pr" ]]; then
+              echo "Existing core update PR: $open_pr"
               exit 0
             fi
-            # The remote branch was cut from an older develop. Left alone it
-            # becomes a revert of everything merged since — the vendor payload is
-            # still right, but merging rolls back unrelated work. Rebuild it on
-            # top of current develop.
-            if ! git push --force-with-lease origin "$branch"; then
-              echo "::error::Could not refresh the stale sync branch $branch." >&2
-              exit 1
-            fi
-            echo "::notice::Refreshed $branch onto current develop."
-            pr_url="$(gh pr list --base develop --head "$branch" --state open \
-              --json url --jq '.[0].url // ""')"
-            [[ -n "$pr_url" ]] && { echo "Refreshed existing PR: $pr_url"; exit 0; }
-          else
-            git push origin "$branch"
           fi
+
           wrapper_version="$(tr -d '[:space:]' < VERSION)"
           body="$(
             printf '%s\n' \
