@@ -1,5 +1,5 @@
 {
-  "description": "SCV workspace guard. Deliberately blocking: it denies writes that no SCV action accounts for. Loaded from the plugin-root default path, so .codex-plugin/plugin.json declares no hooks key. The guard fails open on internal error and is inert in projects that have not adopted SCV. See plugins/scv/vendor/scv-core/core/contracts/guard.md.",
+  "description": "SCV workspace guard. Deliberately blocking: it denies writes that no SCV action accounts for. Loaded from the plugin-root default path, so .codex-plugin/plugin.json declares no hooks key. The plugin directory comes from PLUGIN_ROOT (CLAUDE_PLUGIN_ROOT is the alias this host also sets); there is no CODEX_PLUGIN_ROOT, and naming it left the path empty, the script missing, and the guard silently inert. The guard fails open on internal error and is inert in projects that have not adopted SCV. See plugins/scv/vendor/scv-core/core/contracts/guard.md.",
   "hooks": {
     "PreToolUse": [
       {
@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SCV_GUARD_MODE=gate-bash SCV_GUARD_SCRIPTS=\"${CODEX_PLUGIN_ROOT}/vendor/scv-core/core/scripts\" bash \"${CODEX_PLUGIN_ROOT}/vendor/scv-core/core/template/hooks/guard.sh\"",
+            "command": "SCV_GUARD_MODE=gate-bash SCV_GUARD_SCRIPTS=\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/scripts\" bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/template/hooks/guard.sh\"",
             "timeout": 5
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "SCV_GUARD_MODE=gate-write SCV_GUARD_EXEMPT=\".codex/config.toml\" bash \"${CODEX_PLUGIN_ROOT}/vendor/scv-core/core/template/hooks/guard.sh\"",
+            "command": "SCV_GUARD_MODE=gate-write SCV_GUARD_EXEMPT=\".codex/config.toml\" bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/template/hooks/guard.sh\"",
             "timeout": 5
           }
         ]
