@@ -139,35 +139,97 @@ jobs:
         run: |
           set -euo pipefail
           branch="chore/core-${CORE_VERSION}"
+          BOT_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Read the remote tip BEFORE fetching. --force-with-lease with no
+          # explicit value compares against the remote-tracking ref, so fetching
+          # first refreshes the very thing the lease checks — leaving a plain
+          # --force wearing a safer name.
+          remote_sha="$(git ls-remote --heads origin "$branch" | cut -f1)"
+
+          # Ask about the PR on every path, not only when the tree differs.
+          open_pr="$(gh pr list --base develop --head "$branch" --state open \
+            --json url --jq '.[0].url // ""')"
+          declined_pr="$(gh pr list --base develop --head "$branch" --state closed \
+            --json url,state --jq '[.[] | select(.state == "CLOSED")] | .[0].url // ""')"
+
+          # A closed (not merged) PR is a maintainer declining this upgrade, and
+          # the branch survives a close, so without this the next run rebuilds and
+          # re-proposes it.
+          #
+          # The remote_sha condition is what makes the printed remedy true.
+          # `gh pr list --head` matches the PR record's stored headRefName, which
+          # GitHub keeps forever — deleting the branch does NOT clear the match.
+          # Requiring the branch to still exist turns "delete it" into a real
+          # escape instead of a permanent, silent stop.
+          #
+          # Warning, not notice: this also suppresses a same-version repair (the
+          # pin is re-proposed when the vendored tree fails verification), and a
+          # green run that quietly did nothing is the failure mode worth seeing.
+          if [[ -n "$declined_pr" && -z "$open_pr" && -n "$remote_sha" ]]; then
+            echo "::warning::${CORE_VERSION} was declined ($declined_pr) and $branch still exists, so it will not be re-proposed. Delete the branch to propose it again."
+            exit 0
+          fi
+
           git add plugins/scv tools
-          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
-            git fetch origin \
+
+          # This wrapper vendors into one tree and materialises nothing outside
+          # it, so a deletion elsewhere really is a fault. (The Claude wrapper
+          # projects core into seven more trees and deletes there by design — the
+          # same guard belongs only here.)
+          stray_deletes="$(git diff --cached --name-only --diff-filter=D \
+            | grep -v '^plugins/scv/vendor/scv-core/' || true)"
+          if [[ -n "$stray_deletes" ]]; then
+            echo "::error::Core sync would delete files outside the vendored payload:" >&2
+            printf '%s\n' "$stray_deletes" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "$BOT_EMAIL"
+          git switch -c "$branch"
+          git commit -m "chore: vendor scv-core ${CORE_VERSION}"
+
+          if [[ -z "$remote_sha" ]]; then
+            git push origin "$branch"
+          else
+            git fetch --quiet origin \
               "refs/heads/$branch:refs/remotes/origin/$branch"
-            if ! git diff --cached --quiet "origin/$branch" -- \
-                plugins/scv tools; then
-              echo "::error::Remote branch $branch differs from the verified Core update." >&2
-              exit 1
+            if ! git diff --quiet "origin/$branch" HEAD; then
+              # Rebuild a branch cut from an older develop — unless someone else
+              # has been working there.
+              #
+              # %ce, not %ae. Git carries the original AUTHOR through amend,
+              # rebase and cherry-pick, so a maintainer resolving a conflict on a
+              # bot commit still reads as the bot by author. The committer is who
+              # actually created the object, which is the question being asked.
+              tip_committer="$(git log -1 --format='%ce' "origin/$branch")"
+              if [[ "$tip_committer" != "$BOT_EMAIL" ]]; then
+                # Skip, do not fail. Someone working on the branch is a normal
+                # state, and a red nightly run for it trains people to ignore it.
+                #
+                # Stop here rather than falling through: this run neither pushed
+                # nor validated what is on that branch, and the PR body below
+                # attests to the release-artifact verification that ran against
+                # the local commit just discarded.
+                echo "::warning::$branch was last committed by $tip_committer, not this job — leaving it alone and opening no PR for it. Resolve it by hand, or delete the branch to let the sync rebuild it."
+                exit 0
+              elif ! git push --force-with-lease="refs/heads/$branch:$remote_sha" origin "$branch"; then
+                echo "::error::Could not refresh $branch — the remote moved after this run read it. Re-run the workflow." >&2
+                exit 1
+              else
+                echo "::notice::Refreshed $branch onto current develop."
+              fi
             fi
-            pr_url="$(
-              gh pr list \
-                --base develop \
-                --head "$branch" \
-                --state open \
-                --json url \
-                --jq '.[0].url // ""'
-            )"
-            if [[ -n "$pr_url" ]]; then
-              echo "Existing core update PR: $pr_url"
+            # Whether or not the tree moved, an open PR means there is nothing
+            # left to open. No open PR falls through to gh pr create below, which
+            # is the recovery path for a branch whose PR creation once failed.
+            if [[ -n "$open_pr" ]]; then
+              echo "Existing core update PR: $open_pr"
               exit 0
             fi
-            echo "Reusing remote branch without an open PR: $branch"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git switch -c "$branch"
-            git commit -m "chore: vendor scv-core ${CORE_VERSION}"
-            git push origin "$branch"
           fi
+
           wrapper_version="$(tr -d '[:space:]' < VERSION)"
           body="$(
             printf '%s\n' \
@@ -179,7 +241,9 @@ jobs:
               "- Source: public \`wookiya1364/scv-core\` release" \
               "- Verification: release artifact SHA-256, payload checksums, lock, Core API, Codex adapter, plugin contract, shared regression" \
               "" \
-              "This PR is intentionally not auto-merged. It follows \`chore/* → develop → stage → main\`."
+              "This PR is intentionally not auto-merged. It follows \`chore/* → develop → stage → main\`." \
+              "" \
+              "**Do not want this version?** Close this PR and LEAVE THE BRANCH IN PLACE — that is what tells the sync you declined, and it will stop re-proposing it. GitHub offers \"Delete branch\" in the same box; taking it re-opens the question on the next run."
           )"
           gh pr create \
             --base develop \
