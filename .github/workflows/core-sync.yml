@@ -140,32 +140,46 @@ jobs:
           set -euo pipefail
           branch="chore/core-${CORE_VERSION}"
           git add plugins/scv tools
+
+          # A sync must only move the vendored payload forward. If building it
+          # removed anything outside that tree, stop rather than propose a PR
+          # that deletes repository files — a stale branch once would have taken
+          # plugins/scv/hooks/hooks.json, the guard registration itself, with it.
+          stray_deletes=$(git diff --cached --name-only --diff-filter=D \
+            | grep -v '^plugins/scv/vendor/scv-core/' || true)
+          if [[ -n "$stray_deletes" ]]; then
+            echo "::error::Core sync would delete files outside the vendored payload:" >&2
+            printf '%s\n' "$stray_deletes" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -m "chore: vendor scv-core ${CORE_VERSION}"
+
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
-            git fetch origin \
+            git fetch --quiet origin \
               "refs/heads/$branch:refs/remotes/origin/$branch"
-            if ! git diff --cached --quiet "origin/$branch" -- \
-                plugins/scv tools; then
-              echo "::error::Remote branch $branch differs from the verified Core update." >&2
-              exit 1
-            fi
-            pr_url="$(
-              gh pr list \
-                --base develop \
-                --head "$branch" \
-                --state open \
-                --json url \
-                --jq '.[0].url // ""'
-            )"
-            if [[ -n "$pr_url" ]]; then
-              echo "Existing core update PR: $pr_url"
+            if git diff --quiet "origin/$branch" HEAD; then
+              pr_url="$(gh pr list --base develop --head "$branch" --state open \
+                --json url --jq '.[0].url // ""')"
+              [[ -n "$pr_url" ]] && echo "Existing core update PR: $pr_url"
               exit 0
             fi
-            echo "Reusing remote branch without an open PR: $branch"
+            # The remote branch was cut from an older develop. Left alone it
+            # becomes a revert of everything merged since — the vendor payload is
+            # still right, but merging rolls back unrelated work. Rebuild it on
+            # top of current develop.
+            if ! git push --force-with-lease origin "$branch"; then
+              echo "::error::Could not refresh the stale sync branch $branch." >&2
+              exit 1
+            fi
+            echo "::notice::Refreshed $branch onto current develop."
+            pr_url="$(gh pr list --base develop --head "$branch" --state open \
+              --json url --jq '.[0].url // ""')"
+            [[ -n "$pr_url" ]] && { echo "Refreshed existing PR: $pr_url"; exit 0; }
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git switch -c "$branch"
-            git commit -m "chore: vendor scv-core ${CORE_VERSION}"
             git push origin "$branch"
           fi
           wrapper_version="$(tr -d '[:space:]' < VERSION)"
