@@ -207,7 +207,13 @@ jobs:
               if [[ "$tip_committer" != "$BOT_EMAIL" ]]; then
                 # Skip, do not fail. Someone working on the branch is a normal
                 # state, and a red nightly run for it trains people to ignore it.
-                echo "::warning::$branch was last committed by $tip_committer, not this job — leaving it alone. Resolve it by hand, or delete the branch to let the sync rebuild it."
+                #
+                # Stop here rather than falling through: this run neither pushed
+                # nor validated what is on that branch, and the PR body below
+                # attests to the release-artifact verification that ran against
+                # the local commit just discarded.
+                echo "::warning::$branch was last committed by $tip_committer, not this job — leaving it alone and opening no PR for it. Resolve it by hand, or delete the branch to let the sync rebuild it."
+                exit 0
               elif ! git push --force-with-lease="refs/heads/$branch:$remote_sha" origin "$branch"; then
                 echo "::error::Could not refresh $branch — the remote moved after this run read it. Re-run the workflow." >&2
                 exit 1
@@ -235,7 +241,9 @@ jobs:
               "- Source: public \`wookiya1364/scv-core\` release" \
               "- Verification: release artifact SHA-256, payload checksums, lock, Core API, Codex adapter, plugin contract, shared regression" \
               "" \
-              "This PR is intentionally not auto-merged. It follows \`chore/* → develop → stage → main\`."
+              "This PR is intentionally not auto-merged. It follows \`chore/* → develop → stage → main\`." \
+              "" \
+              "**Do not want this version?** Close this PR and LEAVE THE BRANCH IN PLACE — that is what tells the sync you declined, and it will stop re-proposing it. GitHub offers \"Delete branch\" in the same box; taking it re-opens the question on the next run."
           )"
           gh pr create \
             --base develop \
