@@ -28,3 +28,10 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: bash plugins/scv/vendor/scv-core/core/scripts/check-provenance.sh
+      - name: Vendor gate
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: bash plugins/scv/vendor/scv-core/core/scripts/check-vendor-provenance.sh
