@@ -221,7 +221,7 @@ Google Docs, Notion 자료는 복사하지 않고 `refs:`로 연결합니다. PR
 Core 0.22.0은 journal 훅 seam을 추가합니다: 벤더링된 템플릿 2종이
 자유대화를 `scv/journal/`로 캡처합니다. 등록은 host 소유이며
 [`plugins/scv/references/journal-hooks.md`](plugins/scv/references/journal-hooks.md)에
-문서화되어 있습니다. plugin 자체는 어떤 훅도 등록하지 않습니다.
+문서화되어 있습니다. plugin 자체는 journal 훅을 등록하지 않습니다.
 
 Core 0.23.0부터 그 journal은 **기본 gitignore**입니다. 기록이 둘이고 정책도
 둘입니다. `scv/conversations/`에는 계획이 된 대화가 담기고 커밋됩니다 —
@@ -230,6 +230,38 @@ Core 0.23.0부터 그 journal은 **기본 gitignore**입니다. 기록이 둘이
 읽을 수 있느냐에 달렸습니다. 공유하려면 `.gitignore`에서 `scv/journal/`을
 지우세요 — 다만 지금까지 뭐가 쌓였는지 먼저 보세요, redaction은 휴리스틱입니다.
 한 번 커밋한 뒤에는 ignore를 되돌려도 추적이 끊기지 않습니다.
+
+### 워크스페이스 가드 (0.25.0-codex.2+)
+
+`PreToolUse` 훅이 두 가지 쓰기를 실제로 거부합니다. 계획이 그 계획을 만든 행동
+없이 나타나지 못하게 하는 장치입니다.
+
+- `scv/promote/<slug>/`의 `PLAN.md`, `TESTS.md`, `FEATURE_ARCHITECTURE.md`를
+  손으로 **새로 만드는 것**. 이미 있는 파일 수정은 언제나 허용합니다 — `<TODO>`를
+  채우고 `status:`를 옮기는 게 정상 경로입니다.
+- `scv/` 밖 어디든 쓰는 것. 면제는 `*.md`, `.gitignore`, `.gitattributes`,
+  `LICENSE`, 그리고 `.codex/config.toml`입니다. `.env`는 일부러 면제가 아닙니다 —
+  허용된 `.env` 쓰기는 `plugins/scv/vendor/scv-core/core/scripts/env-set.sh`(Core 0.25.0+)를
+  거치고, 그건 shell 호출이라 쓰기 규칙에 닿지 않습니다.
+
+두 차단 모두 세션에 영수증이 하나 생기면 그 세션 동안 풀립니다. 무엇이 영수증을
+발급하는지는 등록이 정합니다. 이 wrapper는 항목 두 개를 등록합니다. shell
+도구용 `gate-bash`, `apply_patch`와 editor 도구용 `gate-write`. 별도의 mint 항목은
+없습니다. Codex에는 skill 호출 이벤트가 없기 때문이고, 그래서 여기서는 벤더링된
+`core/scripts/` 또는 `plugins/scv/adapter/scripts/`를 부르는 shell 호출이
+영수증이 됩니다 — 0.28.0부터 훅이 두 디렉터리를 콜론 목록으로 감시하므로,
+어댑터로 도는 `$scv:update`·`$scv:set-models`·`$scv:sync`도 Core 액션과 똑같이
+발급합니다. 프로토콜은 전부 무언가를 쓰기 전에 그 호출을 하므로 스킬을 한 번
+돌리면 차단이 풀립니다.
+다만 모델도 같은 호출을 할 수 있어서, skill 호출 자체로 발급하는 Claude Code
+wrapper보다 약합니다. 실수로 새는 길을 막지, 작정한 우회를 막지는 않습니다.
+
+SCV를 쓰지 않는 저장소에서는 아무 일도 하지 않고, 내부 오류가 나면 **열린 채로**
+실패합니다 — stderr에 한 줄 적고 쓰기를 허용합니다. 끄려면 Codex가 도는 환경에
+`SCV_GUARD=off`를 export하세요. 파일이 아니라 프로세스 환경에서만 읽으므로,
+저장소 안의 무언가가 스스로를 면제할 수 없습니다. `SCV_GUARD_RULE_B=off`는 계획
+규칙만 남기고 바깥 쓰기 규칙을 뺍니다. 계약은
+[`core/contracts/guard.md`](plugins/scv/vendor/scv-core/core/contracts/guard.md)입니다.
 
 ## 업데이트
 
@@ -315,9 +347,32 @@ feat/* · fix/* · docs/* · chore/* · refactor/* · test/*
 
 전체 정책은 [`.github/BRANCHING.md`](./.github/BRANCHING.md)를 참고하세요.
 
-이 사슬을 손으로 걷지 않습니다. `gh workflow run promote.yml` 이 각 PR 을 열고
-체크를 기다린 뒤 병합하고, 태그와 릴리스까지 만듭니다 —
-**[docs/RELEASING.md](docs/RELEASING.md)** 가 그 절차입니다.
+`develop`, `stage`, `main`으로 가는 모든 PR에는 branch-flow 검사 옆에서 벤더링된
+Core 검사 두 개가 함께 돕니다.
+
+- **프로버넌스** (`check-provenance.sh`, Core 0.25.0+) — 코드를 바꾸는 PR은
+  `scv/archive/<slug>/PLAN.md`를 함께 추가해야 합니다. `promote/`가 아니라
+  `archive/`를 보는 이유는 work가 PR을 열기 전에 아카이브해서, 그 시점에는
+  `promote/`가 비어 있기 때문입니다. `stage`/`main` 대상 릴리스 체인 PR, 동기화
+  봇의 `chore/core-*` 브랜치, 그리고 문서·`.gitignore`·`.gitattributes`·`LICENSE`·
+  `scv/` 워크플로 디렉터리만 바꾼 diff는 면제입니다.
+  그 밖에는 제목에 `[no-plan: <이유>]`가 필요하고, 대괄호가 비어 있으면
+  거부합니다 — 이유가 이 표시의 전부이기 때문입니다.
+- **벤더** (`check-vendor-provenance.sh`, Core 0.27.0+) — 봇 브랜치가 아닌 곳에서
+  `plugins/scv/vendor/scv-core/`를 다시 쓰는 PR은 제목에
+  `[manual-vendor: <이유>]`가 없으면 막힙니다. 위와 같은 모양입니다. 금지가 아니라
+  선언인 이유는 두 경로가 같은 일을 하지 않기 때문입니다. 봇은 게시된 릴리스
+  아티팩트를 해석해 canonical 해시와 materialized 해시를 둘 다 기록하고, 손으로
+  복사하면 그때 작업 트리에 있던 것이 기록됩니다. 나중에 둘을 구분할 방법이
+  없습니다.
+
+이 사슬을 손으로 걷지 않습니다. `gh workflow run promote.yml` 이 각 PR 을 열고,
+실패한 체크가 없고 도는 체크가 없고 GitHub 이 더 이상 `BLOCKED` 이라 하지 않을
+때까지 기다린 뒤 병합하고, 태그와 릴리스까지 만듭니다 —
+**[docs/RELEASING.md](docs/RELEASING.md)** 가 그 절차입니다. 워크플로 파일 자체를
+고칠 때는 한 가지 주의가 필요합니다. `gh workflow run` 은 기본 브랜치로
+디스패치하므로 `main` 의 사본이 돌고, `promote.yml` 수정은 그 수정을 싣는 릴리스의 **다음**
+릴리스부터 듣습니다.
 
 ## 기원과 라이선스
 
