@@ -2,6 +2,60 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.29.0-codex.1] — 2026-08-18
+
+### Added — SCV Core 0.29.0 동기화 (effort governor)
+
+- `$scv:work` / `$scv:codegen` 이 구현 전에 계획의 실행 밴드를 판정한다
+  (`effort-class.sh`, 백테스트 13/14 를 통과한 3규칙). 세션 추론강도 설정은
+  건드리지 않는다 — 조절되는 것은 실행 방식이다. standard 계획은 단일 패스
+  검증만 수행하고, 실패 신호(같은 단계 적색 2회, 검증 반박 반복)에는 위로만 한
+  밴드 승급한다. 계획 frontmatter 의 `effort_class:` 선언이 항상 이긴다.
+- `.env` 의 `SCV_EFFORT_MODE=auto|ask|off`, 기본 `auto`. `off` 는 분류기를 아예
+  부르지 않고 아무것도 출력하지 않는다 — 이 기능 이전과 완전히 동일하게 돈다.
+- 이 호스트에는 서브에이전트 팬아웃이 없다. orchestration 밴드의 검증은 병렬
+  팬아웃 대신 순차 다중 렌즈 패스로 강하한다 — 계약은 동일하다. 밴드×단계 매핑
+  격자는 README 3종에 "How the effort governor maps to this host" 절로
+  문서화했다.
+- TESTS 내구성 규칙 — PROMOTE.md 체크리스트의 "How-to-run 은 아카이브 후에도 참"
+  규칙과 `tests-smell.sh` 의 경고 2종이 함께 들어온다.
+- Core 핀은 봇 동기화 PR(#74)을 그대로 머지해 0.29.0 이 됐다. `VERSION` 과
+  `plugins/scv/VERSION`, `plugins/scv/.codex-plugin/plugin.json` 은
+  `0.29.0-codex.1` 로 올렸다.
+
+## [0.28.0-codex.1] — 2026-08-18
+
+### Fixed — 어댑터 액션들이 드디어 영수증을 발급한다
+
+- 이 호스트에는 skill 호출 이벤트가 없어서, 영수증의 유일한 출처는 "액션 스크립트
+  디렉터리를 부르는 셸 명령의 관찰"이다. 그런데 훅이 벤더링된 `core/scripts` 한
+  곳만 감시했고, `$scv:update`·`$scv:set-models`·`$scv:sync`·hydrate 는
+  `adapter/scripts/` 로 돌아 아무것도 발급하지 않았다. Core 계약이 요구하는 것을
+  변수 구조상 지킬 수 없었던 것인데, Core 0.28.0 이 `SCV_GUARD_SCRIPTS` 에 콜론
+  목록을 가르치면서 닫혔다. 두 훅 항목이 두 디렉터리를 함께 감시한다.
+- 이 격차를 `core/contracts/guard.md` 대비 알려진 갭으로 적어 두었던 문서들을
+  닫힌 상태로 되감았다.
+
+### Fixed — 훅 두 항목의 환경이 대칭이 됐다
+
+- 한 번 갈라져서 — `gate-write` 만 `.codex/config.toml` 면제를 갖고 있었다 — 같은
+  패치가 editor 경로로는 허용되고 shell 경로로는 거부됐다. `$scv:set-models`
+  3단계가 정확히 그 파일 편집이다. 이제 두 항목이 같은 환경을 싣는다.
+- `test-guard-registration.sh` 가 두 성질을 고정한다: 항목 간 환경 동일성, 그리고
+  어느 스크립트 디렉터리를 불러도 발급되고 다른 쪽 감시가 계속 사는 것. 새
+  케이스는 payload 를 jq 로 만든다 — bash 의 printf 가 형식 문자열의 `\"` 를
+  따옴표 하나로 접어 JSON 이 조용히 깨졌고, 가드가 못 읽는 payload 는 발급 없이
+  허용되므로 가드는 멀쩡한데 케이스만 실패했다.
+
+### Added — SCV Core 0.28.0 동기화
+
+- 낡은 템플릿은 다음 액션이 알아서 메운다 — Core 0.28.0 의 자동 새로고침이 이
+  어댑터에도 그대로 온다. 자세한 이야기와 출시 전 적대 검증 4렌즈 33건은 Core 의
+  CHANGELOG 에 있다.
+- Core 핀은 봇 동기화 PR(#69)을 그대로 머지해 0.28.0 이 됐다. `VERSION` 과
+  `plugins/scv/VERSION`, `plugins/scv/.codex-plugin/plugin.json` 은
+  `0.28.0-codex.1` 로 올렸다.
+
 ## [0.27.0-codex.1] — 2026-08-14
 
 ### Fixed — 승격이 3초 만에 포기하던 것
