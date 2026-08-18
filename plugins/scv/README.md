@@ -72,14 +72,50 @@ model names by guesswork or rewrites installed `SKILL.md` files. A durable
 `.codex/config.toml` edit requires an explicit request, capability verification,
 a preview, and confirmation.
 
+## Workspace guard (0.25.0-codex.2+)
+
+`hooks/hooks.json` registers a deliberately blocking `PreToolUse` guard. It
+denies two things: hand-creating `PLAN.md`, `TESTS.md`, or
+`FEATURE_ARCHITECTURE.md` under `scv/promote/<slug>/`, and writing anywhere
+outside `scv/`. Editing a plan file that already exists is always allowed.
+`*.md`, `.gitignore`, `.gitattributes`, `LICENSE`, and `.codex/config.toml` are
+exempt; `.env` is not, because the sanctioned `.env` writes go through
+`vendor/scv-core/core/scripts/env-set.sh` instead.
+
+Both blocks lift for the rest of the session as soon as a receipt exists. Two
+entries are registered here — `gate-bash` for `Bash`, `shell`, and `local_shell`,
+and `gate-write` for `apply_patch`, `Write`, `Edit`, and `MultiEdit` — and there
+is no separate mint entry, because Codex has no skill-invocation event to mint
+from. The receipt is minted by the shell entry when a command names the vendored
+`core/scripts/` directory, which every Core protocol calls before it writes
+anything — except `$scv:update`, `$scv:set-models` and `$scv:sync`, which run
+out of `adapter/scripts/` and mint nothing. Both commands resolve the plugin
+directory from
+`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`; there is no `CODEX_PLUGIN_ROOT`, and
+naming it is what shipped the guard inert in `0.25.0-codex.1`. Because the file
+sits at the plugin-root default path, `.codex-plugin/plugin.json` still declares
+no `hooks` key.
+
+The guard fails **open** — an internal error prints one line to stderr and allows
+the action — and is inert in a project with no `scv/` directory. Export
+`SCV_GUARD=off` to disable it entirely; it is read from the process environment
+only, never from a file, so nothing in the repository can exempt itself.
+`SCV_GUARD_RULE_B=off` keeps only the plan rule. The contract is
+[`vendor/scv-core/core/contracts/guard.md`](vendor/scv-core/core/contracts/guard.md).
+
+Two operational notes on Codex hooks: they are not hot-reloaded, so restart Codex
+after updating the plugin, and trust is pinned to a hook's contents — a release
+that changes `guard.sh` leaves you unenforced until you approve it again through
+`/hooks`.
+
 ## Journal hook seam (Core 0.22.0+)
 
 Core 0.22.0 ships two hook templates
 (`vendor/scv-core/core/template/hooks/on-user-prompt.sh` and `on-stop.sh`)
 that capture free conversation into the committed team journal
-`scv/journal/`. Hook registration is wrapper/host-owned; this plugin
-intentionally declares no `hooks` manifest entry, and the Codex plugin
-surface does not deliver prompt text or a JSONL transcript path to
+`scv/journal/`. Hook registration is wrapper/host-owned. The guard above
+ships registered, but the journal pair does not: the Codex plugin surface
+does not deliver prompt text or a JSONL transcript path to
 plugin-projected commands. Registration on a Codex host is therefore a
 documented user action — see
 [`references/journal-hooks.md`](references/journal-hooks.md) for the event

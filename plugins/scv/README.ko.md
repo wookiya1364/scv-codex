@@ -71,14 +71,48 @@ model 이름을 추측으로 치환하거나 설치된 `SKILL.md`를 수정하�
 영구 `.codex/config.toml` 변경에는 명시적 요청, 지원 여부 확인, preview,
 확인이 필요합니다.
 
+## 워크스페이스 가드 (0.25.0-codex.2+)
+
+`hooks/hooks.json`이 일부러 차단하는 `PreToolUse` 가드를 등록합니다. 거부하는 건
+둘입니다. `scv/promote/<slug>/`의 `PLAN.md`, `TESTS.md`,
+`FEATURE_ARCHITECTURE.md`를 손으로 새로 만드는 것, 그리고 `scv/` 밖 어디든 쓰는
+것. 이미 있는 계획 파일 수정은 언제나 허용합니다. `*.md`, `.gitignore`,
+`.gitattributes`, `LICENSE`, `.codex/config.toml`은 면제이고 `.env`는 아닙니다 —
+허용된 `.env` 쓰기는 `vendor/scv-core/core/scripts/env-set.sh`를 거치기
+때문입니다.
+
+두 차단 모두 세션에 영수증이 생기는 순간 그 세션 동안 풀립니다. 여기서 등록하는
+항목은 둘입니다 — `Bash`, `shell`, `local_shell`용 `gate-bash`, 그리고
+`apply_patch`, `Write`, `Edit`, `MultiEdit`용 `gate-write`. 별도의 mint 항목은
+없습니다. Codex에는 발급 근거로 삼을 skill 호출 이벤트가 없기 때문입니다. 영수증은
+gate-bash 쪽에서, 명령이 벤더링된 `core/scripts/` 디렉터리를 가리킬 때 발급됩니다.
+Core 프로토콜은 전부 무언가를 쓰기 전에 그 호출을 합니다. 다만 `$scv:update`,
+`$scv:set-models`, `$scv:sync`는 `adapter/scripts/`로 돌아 아무것도 발급하지
+않습니다. 두 명령 모두 plugin
+디렉터리를 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`로 찾습니다. `CODEX_PLUGIN_ROOT`
+같은 변수는 없고, 그 이름을 쓴 것이 `0.25.0-codex.1`에서 가드가 죽은 채로 나간
+이유입니다. 이 파일이 plugin 루트의 기본 경로에 있으므로
+`.codex-plugin/plugin.json`은 여전히 `hooks` 키를 선언하지 않습니다.
+
+가드는 **열린 채로** 실패합니다 — 내부 오류가 나면 stderr에 한 줄 적고 동작을
+허용합니다 — 그리고 `scv/` 디렉터리가 없는 프로젝트에서는 아무 일도 하지 않습니다.
+완전히 끄려면 `SCV_GUARD=off`를 export하세요. 파일이 아니라 프로세스 환경에서만
+읽으므로 저장소 안의 무언가가 스스로를 면제할 수 없습니다.
+`SCV_GUARD_RULE_B=off`는 계획 규칙만 남깁니다. 계약은
+[`vendor/scv-core/core/contracts/guard.md`](vendor/scv-core/core/contracts/guard.md)입니다.
+
+Codex 훅에 대한 운영 메모 둘. 훅은 hot-reload되지 않으므로 plugin을 갱신한 뒤에는
+Codex를 다시 시작하세요. 그리고 신뢰는 훅의 내용에 묶입니다 — `guard.sh`가 바뀐
+릴리스는 `/hooks`에서 다시 승인할 때까지 아무것도 강제하지 않습니다.
+
 ## Journal 훅 seam (Core 0.22.0+)
 
 Core 0.22.0은 자유대화를 커밋되는 팀 journal(`scv/journal/`)로 캡처하는
 훅 템플릿 2종(`vendor/scv-core/core/template/hooks/on-user-prompt.sh`,
-`on-stop.sh`)을 포함합니다. 훅 등록은 wrapper/host 소유이며, 이 plugin은
-의도적으로 `hooks` manifest 항목을 선언하지 않습니다. 또한 Codex plugin
-표면은 프롬프트 원문이나 JSONL transcript 경로를 plugin 명령에 전달하지
-않으므로, Codex host에서의 등록은 문서화된 사용자 행동입니다 — 이벤트
+`on-stop.sh`)을 포함합니다. 훅 등록은 wrapper/host 소유입니다. 위의 가드는
+등록된 채로 배포되지만 journal 짝은 아닙니다. Codex plugin 표면이 프롬프트
+원문이나 JSONL transcript 경로를 plugin 명령에 전달하지 않으므로, Codex
+host에서의 등록은 문서화된 사용자 행동입니다 — 이벤트
 매핑, stdin JSON 계약, `SCV_CORE_ROOT` export, non-blocking·redaction
 보장은 [`references/journal-hooks.md`](references/journal-hooks.md)를
 참조하세요. host가 JSONL transcript를 제공하지 않으면 turn-end 등록은
