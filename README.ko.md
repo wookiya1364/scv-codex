@@ -263,6 +263,26 @@ SCV를 쓰지 않는 저장소에서는 아무 일도 하지 않고, 내부 오�
 규칙만 남기고 바깥 쓰기 규칙을 뺍니다. 계약은
 [`core/contracts/guard.md`](plugins/scv/vendor/scv-core/core/contracts/guard.md)입니다.
 
+### effort governor 가 이 호스트에서 매핑되는 방식 (Core 0.29.0+)
+
+SCV 는 구현 전에 계획의 실행 밴드를 판정합니다(`effort-class.sh`, 백테스트 통과
+3규칙; `.env` 의 `SCV_EFFORT_MODE=auto|ask|off`, 기본 `auto`). 세션 effort 설정은
+건드리지 않습니다 — 거버너가 조절하는 것은 실행 방식입니다. 이 호스트의
+밴드×단계 격자:
+
+| 단계 | standard | heavy | orchestration |
+|---|---|---|---|
+| 기계 (스캔·덱 생성) | low | low | low |
+| 경량 종합 (보고) | medium | medium | medium |
+| 구현 | high | xhigh | xhigh |
+| 검증 | high 단일 | max 적대 1패스 | 순차 다중 렌즈 패스 (이 호스트는 서브에이전트 팬아웃이 없어 orchestration 밴드가 순차로 강하합니다 — 계약은 동일) |
+
+`standard` 계획은 단일 패스 검증만 수행합니다. 승급은 위로만(같은 단계 적색 2회 또는 반박 반복 → 한 밴드 위, 한 줄
+통지, 재승인 없음). 계획 frontmatter 의
+`effort_class: standard|heavy|orchestration` 선언이나 대화 중 한마디로 언제든
+판정을 뒤집을 수 있습니다.
+
+
 ## 업데이트
 
 `$scv:update`로 read-only 버전 검사를 실행합니다. 명시적으로 갱신하려면:
