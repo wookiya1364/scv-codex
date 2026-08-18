@@ -87,9 +87,10 @@ preview、確認が必要です。
 mint entry はありません。Codex には発行の根拠にできる skill 呼び出しイベントが
 ないためです。receipt は gate-bash 側で、コマンドが vendored な `core/scripts/`
 ディレクトリを名指したときに発行されます。Core の protocol はどれも何かを書く前に
-その呼び出しを行います。ただし `$scv:update`、`$scv:set-models`、`$scv:sync` は
-`adapter/scripts/` を通るので何も発行しません。どちらのコマンドも plugin
-ディレクトリを
+その呼び出しを行います。0.28.0 から `SCV_GUARD_SCRIPTS` がコロン区切りで
+`adapter/scripts/` も監視するため、アダプター経由の
+`$scv:update`・`$scv:set-models`・`$scv:sync` も同じように発行します。
+どちらのコマンドも plugin ディレクトリを
 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` から解決します。`CODEX_PLUGIN_ROOT` と
 いう変数は存在せず、その名前を書いたことが `0.25.0-codex.1` でガードが無効のまま
 出荷された原因です。このファイルは plugin root の既定パスにあるため、
