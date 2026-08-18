@@ -273,6 +273,26 @@ can exempt itself. `SCV_GUARD_RULE_B=off` keeps the plan rule and drops the
 outside-write rule. The contract is
 [`core/contracts/guard.md`](plugins/scv/vendor/scv-core/core/contracts/guard.md).
 
+### How the effort governor maps to this host (Core 0.29.0+)
+
+SCV judges each plan's execution band before implementing (`effort-class.sh`,
+three backtested rules; `SCV_EFFORT_MODE=auto|ask|off` in `.env`, default
+`auto`). Your session effort setting is never touched — the governor shapes
+HOW the work runs. On this host the band-by-stage grid lands as:
+
+| stage | standard | heavy | orchestration |
+|---|---|---|---|
+| mechanical (scans, deck builds) | low | low | low |
+| light synthesis (reports) | medium | medium | medium |
+| implementation | high | xhigh | xhigh |
+| verification | high, single pass | max, one adversarial pass | sequential multi-lens passes (this host has no subagent fan-out — the orchestration band degrades to sequence, same contract) |
+
+A `standard` plan runs single-pass verification only. Promotion is upward only (two same-stage red runs, or repeated
+verifier refutation → one band up, one notice line, no re-approval). Override
+any judgment with `effort_class: standard|heavy|orchestration` in the plan's
+frontmatter, or just say so in the conversation.
+
+
 ## Updating
 
 Run `$scv:update` for a read-only version check. To refresh explicitly:
