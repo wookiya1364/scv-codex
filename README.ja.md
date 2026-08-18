@@ -249,12 +249,12 @@ Core 0.23.0 からこの journal は**既定で gitignore** です。記録が 2
 何が receipt を発行するかを決めるのは登録側で、この wrapper は 2 つの entry を
 登録します。shell tool 向けの `gate-bash` と、`apply_patch` および editor tool 向けの
 `gate-write` です。独立した mint entry はありません。Codex には skill 呼び出し
-イベントがないためで、ここでは vendored な `core/scripts/` ディレクトリを名指す
-shell 呼び出しが receipt になります。Core の protocol はどれも何かを書く前にその
-呼び出しを行うので、そうした skill を一度動かせば block は解けます。ただし
-`$scv:update`、`$scv:set-models`、`$scv:sync` は
-`plugins/scv/adapter/scripts/` を通り、このディレクトリは発行対象ではないので
-receipt は残りません。ただしモデル自身も同じ
+イベントがないためで、ここでは vendored な `core/scripts/` または
+`plugins/scv/adapter/scripts/` を名指す shell 呼び出しが receipt になります —
+0.28.0 からフックはこの 2 つのディレクトリをコロン区切りで監視するため、
+アダプター経由の `$scv:update`・`$scv:set-models`・`$scv:sync` も Core の
+アクションと同じように発行します。protocol はどれも何かを書く前にその呼び出しを
+行うので、skill を一度動かせば block は解けます。ただしモデル自身も同じ
 呼び出しができるため、skill 呼び出しそのもので発行する Claude Code wrapper より
 弱い保証です。事故の経路は塞ぎますが、意図的な迂回は塞ぎません。
 

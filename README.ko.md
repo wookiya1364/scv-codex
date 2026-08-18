@@ -248,11 +248,11 @@ Core 0.23.0부터 그 journal은 **기본 gitignore**입니다. 기록이 둘이
 발급하는지는 등록이 정합니다. 이 wrapper는 항목 두 개를 등록합니다. shell
 도구용 `gate-bash`, `apply_patch`와 editor 도구용 `gate-write`. 별도의 mint 항목은
 없습니다. Codex에는 skill 호출 이벤트가 없기 때문이고, 그래서 여기서는 벤더링된
-`core/scripts/` 디렉터리를 부르는 shell 호출이 영수증이 됩니다. Core 프로토콜은
-전부 무언가를 쓰기 전에 그 호출을 하므로 그런 스킬을 한 번 돌리면 차단이 풀립니다.
-다만 `$scv:update`, `$scv:set-models`, `$scv:sync`는
-`plugins/scv/adapter/scripts/`로 도는데, 그 디렉터리는 발급 대상이 아니라
-영수증을 남기지 않습니다.
+`core/scripts/` 또는 `plugins/scv/adapter/scripts/`를 부르는 shell 호출이
+영수증이 됩니다 — 0.28.0부터 훅이 두 디렉터리를 콜론 목록으로 감시하므로,
+어댑터로 도는 `$scv:update`·`$scv:set-models`·`$scv:sync`도 Core 액션과 똑같이
+발급합니다. 프로토콜은 전부 무언가를 쓰기 전에 그 호출을 하므로 스킬을 한 번
+돌리면 차단이 풀립니다.
 다만 모델도 같은 호출을 할 수 있어서, skill 호출 자체로 발급하는 Claude Code
 wrapper보다 약합니다. 실수로 새는 길을 막지, 작정한 우회를 막지는 않습니다.
 
