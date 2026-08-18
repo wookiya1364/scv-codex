@@ -26,10 +26,13 @@ workflow source of truth; this file only defines Codex runtime behavior.
 
 Never fetch core at runtime and never assume a source-checkout path. The
 installed plugin must work from its own cache directory without network access.
-Use absolute, quoted paths for shared helpers:
+Use absolute, quoted paths for shared helpers, with `$SCV_CORE_ROOT` already
+substituted for its value in the command you actually run — the guard matches
+that directory as a fixed string, so a command still carrying the variable mints
+no receipt (see "Guard receipts" below):
 
 ```bash
-bash "$SCV_CORE_ROOT/scripts/help.sh"
+bash "<resolved SCV_CORE_ROOT>/scripts/help.sh"
 ```
 
 The two adapter-owned actions use plugin-local helpers:
@@ -56,6 +59,36 @@ Only an explicitly approved, non-dry-run sync may copy legacy state into
 If active indexes differ, stop with a conflict instead of choosing one.
 After a successful apply, the Codex sync shim also runs the adapter's
 read-only legacy model-policy diagnostic; it never rewrites installed skills.
+
+## Guard receipts
+
+The workspace guard is a `PreToolUse` hook. Without a receipt it denies two
+writes: creating a plan file under `scv/promote/<slug>/`, and writing to a
+non-exempt path outside `scv/`. This host registers `gate-bash` and `gate-write`
+only — Codex has no skill-invocation event, so there is no mint entry, and a
+shell call is the only thing that can mint a receipt here.
+
+`hooks/hooks.json` gives the hook two directories to watch — the vendored
+`$SCV_CORE_ROOT/scripts` AND `$SCV_PLUGIN_ROOT/adapter/scripts`, colon-separated
+(Core 0.28.0 taught `SCV_GUARD_SCRIPTS` to take a list) — and the hook looks for
+each in the command text as a fixed string. Two things follow:
+
+- The adapter helpers above mint exactly like the Core ones now. This closes
+  what shipped as a known gap: with a single directory listed, `$scv:update`,
+  `$scv:set-models`, `$scv:sync` and the hydrate shim ran their scripts and
+  minted nothing, which `core/contracts/guard.md` — "an adapter script
+  directory must be part of the mint allowlist" — required and this host could
+  not express. `test-guard-registration.sh` asserts both directories mint.
+- A command that reaches a core helper through an unexpanded variable carries the
+  variable, not the directory, so it does not match either. Let the resolved path
+  stand in the command you run.
+
+What the user sees: the adapter-routed action finishes normally, the session
+still holds no receipt, and the next source edit is refused — "no SCV action has
+run in this session". Say it in that order: the action ran, the guard never saw
+it. Then offer a core action such as `$scv:status`, which calls a vendored helper
+and clears the block for the rest of the session. Do not disable the guard and do
+not edit the hook to route around this.
 
 ## Parse invocation arguments
 

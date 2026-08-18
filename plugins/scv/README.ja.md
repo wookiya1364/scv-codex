@@ -71,13 +71,50 @@ model 名を推測で変換したり、インストール済み `SKILL.md` を�
 しません。永続的な `.codex/config.toml` 変更には明示的依頼、対応確認、
 preview、確認が必要です。
 
+## ワークスペースガード (0.25.0-codex.2+)
+
+`hooks/hooks.json` が、あえてブロックする `PreToolUse` ガードを登録します。拒否
+するのは 2 つです。`scv/promote/<slug>/` の `PLAN.md`, `TESTS.md`,
+`FEATURE_ARCHITECTURE.md` を手で新規作成すること、そして `scv/` の外へ書き込む
+こと。すでにあるプランファイルの編集は常に許可します。`*.md`, `.gitignore`,
+`.gitattributes`, `LICENSE`, `.codex/config.toml` は免除で、`.env` は免除しません
+— 許可された `.env` 書き込みは `vendor/scv-core/core/scripts/env-set.sh` を通る
+からです。
+
+どちらの block も、session に receipt ができた時点でその session の間は解けます。
+ここで登録する entry は 2 つ — `Bash`, `shell`, `local_shell` 向けの `gate-bash`
+と、`apply_patch`, `Write`, `Edit`, `MultiEdit` 向けの `gate-write` です。独立した
+mint entry はありません。Codex には発行の根拠にできる skill 呼び出しイベントが
+ないためです。receipt は gate-bash 側で、コマンドが vendored な `core/scripts/`
+ディレクトリを名指したときに発行されます。Core の protocol はどれも何かを書く前に
+その呼び出しを行います。0.28.0 から `SCV_GUARD_SCRIPTS` がコロン区切りで
+`adapter/scripts/` も監視するため、アダプター経由の
+`$scv:update`・`$scv:set-models`・`$scv:sync` も同じように発行します。
+どちらのコマンドも plugin ディレクトリを
+`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` から解決します。`CODEX_PLUGIN_ROOT` と
+いう変数は存在せず、その名前を書いたことが `0.25.0-codex.1` でガードが無効のまま
+出荷された原因です。このファイルは plugin root の既定パスにあるため、
+`.codex-plugin/plugin.json` は今も `hooks` キーを宣言しません。
+
+ガードは**開いた側**へ倒れます — 内部エラーでは stderr に 1 行出して動作を許可
+します — そして `scv/` ディレクトリのないプロジェクトでは何もしません。完全に
+無効化するには `SCV_GUARD=off` を export してください。ファイルではなくプロセス
+環境からのみ読むので、リポジトリの中の何かが自分を免除することはできません。
+`SCV_GUARD_RULE_B=off` はプランのルールだけを残します。契約は
+[`vendor/scv-core/core/contracts/guard.md`](vendor/scv-core/core/contracts/guard.md)
+です。
+
+Codex の hook についての運用メモが 2 つ。hook は hot-reload されないので、plugin を
+更新したら Codex を再起動してください。そして信頼は hook の内容に紐づきます —
+`guard.sh` が変わったリリースは、`/hooks` で承認し直すまで何も強制しません。
+
 ## Journal hook seam (Core 0.22.0+)
 
 Core 0.22.0 は自由会話をコミットされる team journal（`scv/journal/`）へ
 記録する hook template 2 種
 （`vendor/scv-core/core/template/hooks/on-user-prompt.sh`、`on-stop.sh`）
-を同梱します。hook 登録は wrapper/host 所有で、この plugin は意図的に
-`hooks` manifest 項目を宣言しません。Codex plugin 表面は prompt 原文や
+を同梱します。hook 登録は wrapper/host 所有です。上のガードは登録済みで
+出荷されますが、journal の 2 つは違います。Codex plugin 表面は prompt 原文や
 JSONL transcript path を plugin コマンドへ渡さないため、Codex host での
 登録は文書化されたユーザー操作です — イベント対応、stdin JSON 契約、
 `SCV_CORE_ROOT` export、non-blocking・redaction 保証は

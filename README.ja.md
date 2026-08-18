@@ -221,7 +221,7 @@ Confluence、Google Docs、Notion の資料はコピーせず `refs:` でリン�
 Core 0.22.0 は journal hook seam を追加します: vendored template 2 種が
 自由会話を `scv/journal/` へ記録します。登録は host 所有で、
 [`plugins/scv/references/journal-hooks.md`](plugins/scv/references/journal-hooks.md)
-に文書化されています。plugin 自体は hook を一切登録しません。
+に文書化されています。plugin 自体は journal hook を登録しません。
 
 Core 0.23.0 からこの journal は**既定で gitignore** です。記録が 2 つ、方針も
 2 つあります。`scv/conversations/` には計画になった対話が入り、コミットされます
@@ -231,6 +231,41 @@ Core 0.23.0 からこの journal は**既定で gitignore** です。記録が 2
 `scv/journal/` を削除してください — ただし何が蓄積されたかを先に確認して
 ください、redaction はヒューリスティックです。一度コミットすると ignore を
 戻しても追跡は外れません。
+
+### ワークスペースガード (0.25.0-codex.2+)
+
+`PreToolUse` hook が 2 種類の書き込みを実際に拒否します。プランを生み出す操作
+なしにプランだけが現れることを防ぐ仕組みです。
+
+- `scv/promote/<slug>/` の `PLAN.md`, `TESTS.md`, `FEATURE_ARCHITECTURE.md` を
+  手で**新規作成**すること。すでにあるファイルの編集は常に許可します —
+  `<TODO>` を埋め、`status:` を進めるのは正規の経路です。
+- `scv/` の外へ書き込むこと。免除は `*.md`, `.gitignore`, `.gitattributes`,
+  `LICENSE`、そして `.codex/config.toml` です。`.env` はあえて免除しません —
+  許可された `.env` 書き込みは `plugins/scv/vendor/scv-core/core/scripts/env-set.sh`
+  (Core 0.25.0+) を通り、これは shell 呼び出しなので書き込みルールに触れません。
+
+どちらの block も、session に receipt が 1 つできればその session の間は解けます。
+何が receipt を発行するかを決めるのは登録側で、この wrapper は 2 つの entry を
+登録します。shell tool 向けの `gate-bash` と、`apply_patch` および editor tool 向けの
+`gate-write` です。独立した mint entry はありません。Codex には skill 呼び出し
+イベントがないためで、ここでは vendored な `core/scripts/` または
+`plugins/scv/adapter/scripts/` を名指す shell 呼び出しが receipt になります —
+0.28.0 からフックはこの 2 つのディレクトリをコロン区切りで監視するため、
+アダプター経由の `$scv:update`・`$scv:set-models`・`$scv:sync` も Core の
+アクションと同じように発行します。protocol はどれも何かを書く前にその呼び出しを
+行うので、skill を一度動かせば block は解けます。ただしモデル自身も同じ
+呼び出しができるため、skill 呼び出しそのもので発行する Claude Code wrapper より
+弱い保証です。事故の経路は塞ぎますが、意図的な迂回は塞ぎません。
+
+SCV を採用していないリポジトリでは何もせず、内部エラーでは**開いた側**へ倒れます
+— stderr に 1 行出して書き込みを許可します。無効化するには Codex を動かす環境で
+`SCV_GUARD=off` を export してください。ファイルではなくプロセス環境からのみ読む
+ので、リポジトリの中の何かが自分を免除することはできません。
+`SCV_GUARD_RULE_B=off` はプランのルールだけを残し、外部書き込みのルールを外します。
+契約は
+[`core/contracts/guard.md`](plugins/scv/vendor/scv-core/core/contracts/guard.md)
+です。
 
 ## 更新
 
@@ -322,9 +357,32 @@ feat/* · fix/* · docs/* · chore/* · refactor/* · test/*
 完全な方針は [`.github/BRANCHING.md`](./.github/BRANCHING.md) を参照して
 ください。
 
+`develop`, `stage`, `main` 宛のすべての PR では、branch-flow の検査と並んで
+vendored Core の検査が 2 つ走ります。
+
+- **provenance** (`check-provenance.sh`, Core 0.25.0+) — コードを変える PR は
+  `scv/archive/<slug>/PLAN.md` も追加しなければなりません。`promote/` ではなく
+  `archive/` を見るのは、work が PR を開く前に archive するため、その時点では
+  `promote/` が空だからです。`stage`/`main` 宛の release chain PR、sync bot の
+  `chore/core-*` ブランチ、そして散文・`.gitignore`・`.gitattributes`・`LICENSE`・
+  `scv/` ワークフローディレクトリしか触らない diff は免除です。
+  それ以外はタイトルに `[no-plan: <理由>]` が必要で、角括弧が空なら拒否します —
+  理由こそがこの印の全部だからです。
+- **vendor** (`check-vendor-provenance.sh`, Core 0.27.0+) — sync bot 以外の
+  ブランチから `plugins/scv/vendor/scv-core/` を書き換える PR は、タイトルに
+  `[manual-vendor: <理由>]` がなければ止まります。上と同じ形です。禁止ではなく
+  宣言なのは、2 つの経路が同じ仕事をしていないからです。bot は公開された release
+  artifact を解決し canonical と materialized の両方のハッシュを記録しますが、
+  手でコピーするとその時の作業ツリーにあったものが記録され、後から両者を見分ける
+  方法はありません。
+
 このチェーンを手作業で歩くことはありません。`gh workflow run promote.yml` が
-各 PR を開き、チェックを待って merge し、タグとリリースまで作ります —
-**[docs/RELEASING.md](docs/RELEASING.md)** がその手順です。
+各 PR を開き、失敗したチェックがなく、走っているチェックもなく、GitHub 自身が
+その PR を `BLOCKED` と呼ばなくなるまで待ってから merge し、タグとリリースまで
+作ります — **[docs/RELEASING.md](docs/RELEASING.md)** がその手順です。workflow
+ファイル自体を直すときは注意が 1 つあります。`gh workflow run` は既定ブランチへ
+ディスパッチするので `main` の写しが動き、`promote.yml` の修正はそれを載せたリリースの
+**次**のリリースから効きます。
 
 ## 起源とライセンス
 
