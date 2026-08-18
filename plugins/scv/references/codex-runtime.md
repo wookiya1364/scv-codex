@@ -68,17 +68,17 @@ non-exempt path outside `scv/`. This host registers `gate-bash` and `gate-write`
 only — Codex has no skill-invocation event, so there is no mint entry, and a
 shell call is the only thing that can mint a receipt here.
 
-`hooks/hooks.json` gives the hook one directory to watch, the vendored
-`$SCV_CORE_ROOT/scripts`, and the hook looks for it in the command text as a
-fixed string. Two things follow:
+`hooks/hooks.json` gives the hook two directories to watch — the vendored
+`$SCV_CORE_ROOT/scripts` AND `$SCV_PLUGIN_ROOT/adapter/scripts`, colon-separated
+(Core 0.28.0 taught `SCV_GUARD_SCRIPTS` to take a list) — and the hook looks for
+each in the command text as a fixed string. Two things follow:
 
-- The adapter helpers above run from `$SCV_PLUGIN_ROOT/adapter/scripts`, which is
-  not that directory. `$scv:update`, `$scv:set-models`, `$scv:sync` and the
-  hydrate shim mint nothing, though each of them runs a script.
-  `core/contracts/guard.md` requires an adapter script directory to be in the
-  mint allowlist on a host that mints from a script call. This host cannot
-  honour that yet — `SCV_GUARD_SCRIPTS` holds one directory — so treat these
-  three as a known gap against the contract, not as the design.
+- The adapter helpers above mint exactly like the Core ones now. This closes
+  what shipped as a known gap: with a single directory listed, `$scv:update`,
+  `$scv:set-models`, `$scv:sync` and the hydrate shim ran their scripts and
+  minted nothing, which `core/contracts/guard.md` — "an adapter script
+  directory must be part of the mint allowlist" — required and this host could
+  not express. `test-guard-registration.sh` asserts both directories mint.
 - A command that reaches a core helper through an unexpanded variable carries the
   variable, not the directory, so it does not match either. Let the resolved path
   stand in the command you run.

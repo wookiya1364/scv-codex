@@ -256,10 +256,11 @@ one is decided by registration, and this wrapper registers two
 entries: `gate-bash` for shell tools and `gate-write` for `apply_patch` and the
 editor tools. There is no separate mint entry, because Codex has no
 skill-invocation event, so here the receipt comes from a shell call naming the
-vendored `core/scripts/` directory. Every Core protocol makes such a call before
-it writes anything, so running one of those skills clears the block — but not
-`$scv:update`, `$scv:set-models` or `$scv:sync`, which run out of
-`plugins/scv/adapter/scripts/`, a directory the hook does not mint from — but the model can
+vendored `core/scripts/` directory or `plugins/scv/adapter/scripts/` — the hook
+watches both since 0.28.0, so the adapter-routed actions (`$scv:update`,
+`$scv:set-models`, `$scv:sync`) mint exactly like the Core ones. Every protocol
+makes such a call before it writes anything, so running one skill clears the
+block — but the model can
 make that call too, which is why this is weaker than the Claude Code wrapper,
 where the skill invocation itself mints. It closes the accidental path, not a
 determined one.

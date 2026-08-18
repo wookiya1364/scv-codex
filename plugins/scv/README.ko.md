@@ -86,9 +86,10 @@ model 이름을 추측으로 치환하거나 설치된 `SKILL.md`를 수정하�
 `apply_patch`, `Write`, `Edit`, `MultiEdit`용 `gate-write`. 별도의 mint 항목은
 없습니다. Codex에는 발급 근거로 삼을 skill 호출 이벤트가 없기 때문입니다. 영수증은
 gate-bash 쪽에서, 명령이 벤더링된 `core/scripts/` 디렉터리를 가리킬 때 발급됩니다.
-Core 프로토콜은 전부 무언가를 쓰기 전에 그 호출을 합니다. 다만 `$scv:update`,
-`$scv:set-models`, `$scv:sync`는 `adapter/scripts/`로 돌아 아무것도 발급하지
-않습니다. 두 명령 모두 plugin
+Core 프로토콜은 전부 무언가를 쓰기 전에 그 호출을 합니다. 0.28.0부터
+`SCV_GUARD_SCRIPTS`가 콜론 목록으로 `adapter/scripts/`까지 감시하므로 어댑터로
+도는 `$scv:update`·`$scv:set-models`·`$scv:sync`도 똑같이 발급합니다. 두 명령
+모두 plugin
 디렉터리를 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`로 찾습니다. `CODEX_PLUGIN_ROOT`
 같은 변수는 없고, 그 이름을 쓴 것이 `0.25.0-codex.1`에서 가드가 죽은 채로 나간
 이유입니다. 이 파일이 plugin 루트의 기본 경로에 있으므로

@@ -87,10 +87,10 @@ entries are registered here — `gate-bash` for `Bash`, `shell`, and `local_shel
 and `gate-write` for `apply_patch`, `Write`, `Edit`, and `MultiEdit` — and there
 is no separate mint entry, because Codex has no skill-invocation event to mint
 from. The receipt is minted by the shell entry when a command names the vendored
-`core/scripts/` directory, which every Core protocol calls before it writes
-anything — except `$scv:update`, `$scv:set-models` and `$scv:sync`, which run
-out of `adapter/scripts/` and mint nothing. Both commands resolve the plugin
-directory from
+`core/scripts/` directory or `adapter/scripts/` — both watched since 0.28.0
+via `SCV_GUARD_SCRIPTS`'s colon list, so the adapter-routed actions mint too.
+Every protocol calls one of them before it writes anything. Both commands
+resolve the plugin directory from
 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`; there is no `CODEX_PLUGIN_ROOT`, and
 naming it is what shipped the guard inert in `0.25.0-codex.1`. Because the file
 sits at the plugin-root default path, `.codex-plugin/plugin.json` still declares
