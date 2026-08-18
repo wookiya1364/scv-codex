@@ -265,6 +265,26 @@ SCV を採用していないリポジトリでは何もせず、内部エラー�
 `SCV_GUARD_RULE_B=off` はプランのルールだけを残し、外部書き込みのルールを外します。
 契約は
 [`core/contracts/guard.md`](plugins/scv/vendor/scv-core/core/contracts/guard.md)
+
+### effort governor がこのホストでどう対応するか (Core 0.29.0+)
+
+SCV は実装前に計画の実行バンドを判定します(`effort-class.sh`、バックテストを
+通過した 3 規則。`.env` の `SCV_EFFORT_MODE=auto|ask|off`、既定は `auto`)。
+セッションの effort 設定には触れません — governor が変えるのは実行の形です。
+このホストでのバンド×段階の対応:
+
+| 段階 | standard | heavy | orchestration |
+|---|---|---|---|
+| 機械的 (スキャン・deck 生成) | low | low | low |
+| 軽い統合 (レポート) | medium | medium | medium |
+| 実装 | high | xhigh | xhigh |
+| 検証 | high 単発 | max 敵対 1 パス | 逐次のマルチレンズパス (このホストにはサブエージェント fan-out がないため、orchestration バンドは逐次に降格します — 契約は同一) |
+
+`standard` の計画は単発の検証のみを行います。昇格は上方向のみ(同一段階の赤 2 回、または反証の繰り返し →
+1 バンド上へ、通知 1 行、再承認なし)。計画 frontmatter の
+`effort_class: standard|heavy|orchestration` 宣言か、会話での一言でいつでも
+判定を覆せます。
+
 です。
 
 ## 更新
