@@ -225,7 +225,7 @@ English.
 Core 0.22.0 adds a journal hook seam: two vendored templates capture free
 conversation into `scv/journal/`. Registration is host-owned and documented
 in [`plugins/scv/references/journal-hooks.md`](plugins/scv/references/journal-hooks.md);
-the plugin itself registers no hooks.
+the plugin registers no journal hooks of its own.
 
 Since Core 0.23.0 that journal is **gitignored by default**. Two records, two
 policies: `scv/conversations/` keeps the dialogs that became plans and is
@@ -235,6 +235,42 @@ and whether that belongs in a repository depends on who can read it. To share
 it, drop `scv/journal/` from `.gitignore` — but look at what has accumulated
 first, because redaction is a heuristic. Once committed, restoring the ignore
 rule does not untrack the files.
+
+### The workspace guard (0.25.0-codex.2+)
+
+A `PreToolUse` hook refuses two writes outright, so that a plan cannot appear
+without the action that produces it:
+
+- creating `PLAN.md`, `TESTS.md`, or `FEATURE_ARCHITECTURE.md` under
+  `scv/promote/<slug>/` by hand. Editing one that already exists is always
+  allowed — filling in `<TODO>` spots and moving `status:` along is the normal
+  path.
+- writing anywhere in the project outside `scv/`. Exempt: `*.md`, `.gitignore`,
+  `.gitattributes`, `LICENSE`, and `.codex/config.toml`. `.env` deliberately is
+  not — the sanctioned `.env` writes go through
+  `plugins/scv/vendor/scv-core/core/scripts/env-set.sh` (Core 0.25.0+), a shell call that
+  never reaches the write rule at all.
+
+Both blocks lift for the rest of the session once a receipt exists. What mints
+one is decided by registration, and this wrapper registers two
+entries: `gate-bash` for shell tools and `gate-write` for `apply_patch` and the
+editor tools. There is no separate mint entry, because Codex has no
+skill-invocation event, so here the receipt comes from a shell call naming the
+vendored `core/scripts/` directory. Every Core protocol makes such a call before
+it writes anything, so running one of those skills clears the block — but not
+`$scv:update`, `$scv:set-models` or `$scv:sync`, which run out of
+`plugins/scv/adapter/scripts/`, a directory the hook does not mint from — but the model can
+make that call too, which is why this is weaker than the Claude Code wrapper,
+where the skill invocation itself mints. It closes the accidental path, not a
+determined one.
+
+The guard is inert in a repository that never adopted SCV, and it fails **open**:
+any internal error prints one line to stderr and allows the write. To switch it
+off, export `SCV_GUARD=off` in the environment Codex runs in — it is read from
+the process environment only, never from a file, so nothing inside the repository
+can exempt itself. `SCV_GUARD_RULE_B=off` keeps the plan rule and drops the
+outside-write rule. The contract is
+[`core/contracts/guard.md`](plugins/scv/vendor/scv-core/core/contracts/guard.md).
 
 ## Updating
 
@@ -324,9 +360,34 @@ feat/* · fix/* · docs/* · chore/* · refactor/* · test/*
 
 See [`.github/BRANCHING.md`](./.github/BRANCHING.md) for the full policy.
 
+Two vendored Core checks run beside the branch-flow one on every pull request
+into `develop`, `stage`, or `main`:
+
+- **Provenance** (`check-provenance.sh`, Core 0.25.0+) — a pull request that
+  changes code must also add an archived plan at `scv/archive/<slug>/PLAN.md`.
+  It reads `archive/` rather than `promote/` because the work action archives
+  the plan before it opens the PR, so by then `promote/` is empty. Release-chain
+  pull requests into `stage` or `main`, the sync bot's `chore/core-*` branches,
+  and diffs that touch nothing but prose, `.gitignore`, `.gitattributes`,
+  `LICENSE` and the `scv/` workflow directory are exempt. Anything
+  else needs `[no-plan: <reason>]` in the title; an empty `[no-plan]` is refused,
+  because the reason is the whole point of the marker.
+- **Vendor** (`check-vendor-provenance.sh`, Core 0.27.0+) — a pull request that
+  rewrites `plugins/scv/vendor/scv-core/` from a branch that is not the sync
+  bot's is refused unless the title says `[manual-vendor: <reason>]`, the same
+  shape as the marker above. Vendoring by hand is declared, not forbidden,
+  because the two paths do not do the same work: the bot resolves the published
+  release artifact and records both the canonical and the materialized hash,
+  while a hand copy records whatever the working tree held, and nothing
+  downstream can tell them apart afterwards.
+
 Nobody walks that chain by hand. `gh workflow run promote.yml` opens each pull
-request, waits for its checks, merges, then tags and publishes —
-**[docs/RELEASING.md](docs/RELEASING.md)** is the procedure.
+request, waits until nothing has failed, nothing is still running, and GitHub
+itself stops calling the pull request `BLOCKED`, then merges, tags, and
+publishes — **[docs/RELEASING.md](docs/RELEASING.md)** is the procedure. One
+caveat when the workflow file itself changes: `gh workflow run` dispatches
+against the default branch, so `main`'s copy runs, and a fix to `promote.yml`
+first takes effect on the release after the one that ships it.
 
 ## Origin and license
 
