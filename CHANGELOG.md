@@ -2,6 +2,21 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.30.0-codex.1] — 2026-08-19
+
+### Core 0.30.0 동기화 — .env.example.scv 자동 최신화 + 러너 env 위생
+
+- sync 가 프로젝트 루트의 `.env.example.scv` 를 항상 최신 템플릿으로 갱신한다 —
+  "root 는 user-owned" 원칙의 단 하나 명명된 예외. TEMPLATE_VERSION 2.2.0 이
+  트리거라 기존 프로젝트는 다음 액션에서 autosync 로 자동 수령하고, 커밋 안 된
+  수정은 DIRTY 거부, 부재 시 재생성, `.env` 는 절대 불가침이다.
+- 회귀 러너가 재진입 방지 표시(SCV_AUTOSYNC_RUNNING=1)를 자식 시나리오에
+  흘리던 결함을 고쳤다. autosync 훅을 검증하는 계약이 러너 안에서만 10/11
+  적색이었고, 이제 러너가 그 표시 하나만 지우고 시나리오를 실행한다. 사용자가
+  export 한 env 는 그대로 전달되고, 누적 회귀는 11/11 로 복원됐다.
+- 봇 PR(#79)을 그대로 머지했다. Core pin `0.29.0` → `0.30.0`, 래퍼 버전 3종
+  `0.29.0-codex.1` → `0.30.0-codex.1`.
+
 ## [0.29.0-codex.1] — 2026-08-18
 
 ### Added — SCV Core 0.29.0 동기화 (effort governor)
