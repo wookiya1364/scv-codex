@@ -106,6 +106,20 @@ Codex 훅에 대한 운영 메모 둘. 훅은 hot-reload되지 않으므로 plug
 Codex를 다시 시작하세요. 그리고 신뢰는 훅의 내용에 묶입니다 — `guard.sh`가 바뀐
 릴리스는 `/hooks`에서 다시 승인할 때까지 아무것도 강제하지 않습니다.
 
+## Effort governor (Core 0.29.0+)
+
+`$scv:work` 와 `$scv:codegen` 이 구현 전에 계획의 실행 밴드를 판정하고, 그에
+맞춰 실행 방식을 조절합니다 — 세션의 effort 설정은 건드리지 않습니다. 프로젝트
+`.env` 의 `SCV_EFFORT_MODE=auto|ask|off` 로 제어하며, 기본값 `auto` 는 한 줄
+통지 후 그대로 진행합니다. `off` 는 이 단계를 통째로 건너뜁니다 — 분류기를
+아예 호출하지 않고, 아무것도 출력하지 않고, 이 기능 이전과 완전히 동일하게
+실행합니다. 이 호스트에는 서브에이전트 팬아웃이 없으므로 orchestration 밴드의
+검증은 순차 다중 렌즈 패스로 강하합니다 — 밴드×단계 매핑 전체는
+[저장소 가이드](../../README.ko.md)의 "effort governor 가 이 호스트에서
+매핑되는 방식" 절을 참조하세요. 계약은
+[`vendor/scv-core/core/protocols/work.md`](vendor/scv-core/core/protocols/work.md)
+의 Step 5e 입니다.
+
 ## Journal 훅 seam (Core 0.22.0+)
 
 Core 0.22.0은 자유대화를 커밋되는 팀 journal(`scv/journal/`)로 캡처하는
