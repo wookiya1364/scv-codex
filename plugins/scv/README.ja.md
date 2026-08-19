@@ -108,6 +108,20 @@ Codex の hook についての運用メモが 2 つ。hook は hot-reload され
 更新したら Codex を再起動してください。そして信頼は hook の内容に紐づきます —
 `guard.sh` が変わったリリースは、`/hooks` で承認し直すまで何も強制しません。
 
+## Effort governor (Core 0.29.0+)
+
+`$scv:work` と `$scv:codegen` は実装前に計画の実行バンドを判定し、それに
+合わせて実行の形を調整します — セッションの effort 設定には触れません。
+project `.env` の `SCV_EFFORT_MODE=auto|ask|off` で制御し、既定の `auto` は
+1 行の通知を出してそのまま進みます。`off` はこのステップ全体をスキップ
+します — 分類器を一切呼ばず、何も出力せず、この機能以前と完全に同じ動作を
+します。このホストには subagent fan-out がないため、orchestration バンドの
+検証は順次の multi-lens パスへ degrade します — バンド×ステージの対応全体は
+[リポジトリガイド](../../README.ja.md)の「effort governor がこのホストで
+どう対応するか」節を参照してください。契約は
+[`vendor/scv-core/core/protocols/work.md`](vendor/scv-core/core/protocols/work.md)
+の Step 5e です。
+
 ## Journal hook seam (Core 0.22.0+)
 
 Core 0.22.0 は自由会話をコミットされる team journal（`scv/journal/`）へ

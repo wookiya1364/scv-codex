@@ -108,6 +108,21 @@ after updating the plugin, and trust is pinned to a hook's contents — a releas
 that changes `guard.sh` leaves you unenforced until you approve it again through
 `/hooks`.
 
+## Effort governor (Core 0.29.0+)
+
+`$scv:work` and `$scv:codegen` judge each plan's execution band before
+implementing and shape HOW the work runs to match — your session effort
+setting is never touched. Set `SCV_EFFORT_MODE=auto|ask|off` in the project
+`.env`; the default is `auto`, which prints one notice line and proceeds.
+`off` skips the step entirely: the classifier is never invoked, nothing is
+printed, and execution is exactly what it was before this feature. This host
+has no subagent fan-out, so the orchestration band's verification degrades to
+sequential multi-lens passes — the full band-by-stage grid is in the
+[repository guide](../../README.md)'s "How the effort governor maps to this
+host" section. The contract is
+[`vendor/scv-core/core/protocols/work.md`](vendor/scv-core/core/protocols/work.md)
+Step 5e.
+
 ## Journal hook seam (Core 0.22.0+)
 
 Core 0.22.0 ships two hook templates
