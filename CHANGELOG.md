@@ -2,6 +2,25 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.31.0-codex.1] — 2026-08-21
+
+### Core 0.31.0 동기화 — 쉬운 말 2단계 + 기록 훅 등록
+
+- 모든 SCV 명령의 "쉬운 말" 규칙이 **답의 모양**으로 바뀌었다 — 먼저 1–2문장,
+  예시 하나, 묻기 전 코드값 금지, 자세한 건 원할 때; 행동에 필요한 식별자는 요약
+  뒤에. `$scv:help` 대화 모드는 매 턴 "짧은 답 → 예시 → 질문 하나".
+- 이 플러그인이 처음으로 Core 의 기록 훅 두 개를 `UserPromptSubmit` / `Stop` 에
+  등록한다(#83). UserPromptSubmit 템플릿은 매 턴 답의 모양 요약을 stdout 으로 내고
+  Codex 가 그것을 모델 컨텍스트에 넣는다 — 명령 밖 일반 대화에도 규칙이 닿고,
+  일반 대화가 journal 에 남는다. 비차단 계약 그대로.
+- `.env` 스위치 두 개: `SCV_PLAIN_LANGUAGE`(기본 on, `off` 만 꺼짐),
+  `SCV_PLAIN_MAX_SENTENCES=<n>`(첫 답 문장 상한, 기본 2). `.env.example.scv` 에
+  문서화, 템플릿 `scv/SCV.md` 에 "How SCV talks to you" 절, 예시 루틴
+  `plain-language-audit`. TEMPLATE_VERSION 2.3.0 — 기존 프로젝트는 다음 액션 때
+  autosync 로 수령.
+- 회귀 러너가 자기 경로 표시(SCV_DIR 등 5개)를 시나리오에 흘리던 결함 수정.
+- Core pin `0.30.0` → `0.31.0`, 래퍼 버전 3종 `0.30.0-codex.1` → `0.31.0-codex.1`.
+
 ## [0.30.0-codex.1] — 2026-08-19
 
 ### Core 0.30.0 동기화 — .env.example.scv 자동 최신화 + 러너 env 위생
