@@ -1,5 +1,5 @@
 {
-  "description": "SCV workspace guard. Deliberately blocking: it denies writes that no SCV action accounts for. Loaded from the plugin-root default path, so .codex-plugin/plugin.json declares no hooks key. The plugin directory comes from PLUGIN_ROOT (CLAUDE_PLUGIN_ROOT is the alias this host also sets); there is no CODEX_PLUGIN_ROOT, and naming it left the path empty, the script missing, and the guard silently inert. Both entries carry the SAME environment on purpose: SCV_GUARD_SCRIPTS lists the vendored Core scripts AND adapter/scripts (colon-separated, Core 0.28.0+) so the adapter-routed actions mint, and SCV_GUARD_EXEMPT rides on gate-bash too, so a config.toml patch is allowed through the shell path exactly as through the editor path — they diverged once and the same edit was allowed one way and denied the other. The guard fails open only on an empty payload or a missing JSON reader, and is inert in projects that have not adopted SCV. See plugins/scv/vendor/scv-core/core/contracts/guard.md.",
+  "description": "SCV hooks. Two kinds, and the distinction is the contract: the journal capture on UserPromptSubmit/Stop is non-blocking by design (the Core templates exit 0 on every failure and write nothing outside scv/journal/, with redaction running before anything hits disk; on UserPromptSubmit the template also prints the plain-language answer-shape reminder to stdout, which Codex adds to the model context — Core 0.31.0+), while the PreToolUse guard is deliberately blocking — it denies writes that no SCV action accounts for. The plugin directory comes from PLUGIN_ROOT (CLAUDE_PLUGIN_ROOT is the alias this host also sets); there is no CODEX_PLUGIN_ROOT, and naming it left the path empty, the script missing, and the guard silently inert. Both guard entries carry the SAME environment on purpose: SCV_GUARD_SCRIPTS lists the vendored Core scripts AND adapter/scripts (colon-separated, Core 0.28.0+) so the adapter-routed actions mint, and SCV_GUARD_EXEMPT rides on gate-bash too, so a config.toml patch is allowed through the shell path exactly as through the editor path — they diverged once and the same edit was allowed one way and denied the other. The guard fails open only on an empty payload or a missing JSON reader, and is inert in projects that have not adopted SCV. See plugins/scv/vendor/scv-core/core/contracts/guard.md.",
   "hooks": {
     "PreToolUse": [
       {
@@ -19,6 +19,28 @@
             "type": "command",
             "command": "SCV_GUARD_MODE=gate-write SCV_GUARD_SCRIPTS=\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/scripts:${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/adapter/scripts\" SCV_GUARD_EXEMPT=\".codex/config.toml\" bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/template/hooks/guard.sh\"",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SCV_CORE_ROOT=\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core\" bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/template/hooks/on-user-prompt.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SCV_CORE_ROOT=\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core\" bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/template/hooks/on-stop.sh\"",
+            "timeout": 60
           }
         ]
       }
