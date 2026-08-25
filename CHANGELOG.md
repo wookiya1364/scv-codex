@@ -2,6 +2,15 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.35.0-codex.1] — 2026-08-25
+
+### Core 0.35.0 동기화 — 실행 기록 첨부 + SCV_ALWAYS_ON
+
+- 증적 첨부가 실행 기록(run manifest)을 따른다 — 결과 폴더명이 잘려도 붙고,
+  0건이면 알리며, 열린 PR 은 갱신한다.
+- SCV_ALWAYS_ON(기본 on): 일반 대화도 매 턴 help 라우팅. off 만 끈다.
+- Core pin 0.34.1 → 0.35.0, 래퍼 버전 0.34.1-codex.1 → 0.35.0-codex.1.
+
 ## [0.34.1-codex.1] — 2026-08-24
 
 ### Core 0.34.1 동기화 — 설정 파일은 항상 있고, 모든 키가 보인다
