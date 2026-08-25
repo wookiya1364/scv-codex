@@ -78,8 +78,9 @@ preview、確認が必要です。
 `FEATURE_ARCHITECTURE.md` を手で新規作成すること、そして `scv/` の外へ書き込む
 こと。すでにあるプランファイルの編集は常に許可します。`*.md`, `.gitignore`,
 `.gitattributes`, `LICENSE`, `.codex/config.toml` は免除で、`.env` は免除しません
-— 許可された `.env` 書き込みは `vendor/scv-core/core/scripts/env-set.sh` を通る
-からです。
+— SCV はもう `.env` を読みも書きもしません (Core 0.32.0+): 設定は `scv/` 配下の
+2 ファイル (`scv_settings.json` + git-ignore される secret ファイル) にあり、
+`settings-set.sh` で書きます。`scv/` 内のパスなので書き込み規則にはかかりません。
 
 どちらの block も、session に receipt ができた時点でその session の間は解けます。
 ここで登録する entry は 2 つ — `Bash`, `shell`, `local_shell` 向けの `gate-bash`
@@ -112,7 +113,7 @@ Codex の hook についての運用メモが 2 つ。hook は hot-reload され
 
 `$scv:work` と `$scv:codegen` は実装前に計画の実行バンドを判定し、それに
 合わせて実行の形を調整します — セッションの effort 設定には触れません。
-project `.env` の `SCV_EFFORT_MODE=auto|ask|off` で制御し、既定の `auto` は
+project の `scv/scv_settings.json` の `SCV_EFFORT_MODE=auto|ask|off` で制御し、既定の `auto` は
 1 行の通知を出してそのまま進みます。`off` はこのステップ全体をスキップ
 します — 分類器を一切呼ばず、何も出力せず、この機能以前と完全に同じ動作を
 します。このホストには subagent fan-out がないため、orchestration バンドの
@@ -158,7 +159,7 @@ codex plugin add scv@scv-codex
 更新後、新しい Codex session を開始してください。project template も
 merge する場合は `$scv:sync` を別途実行します。
 
-project `.env` の `SCV_LANG=en|ko|ja` で生成言語を固定できます。未指定
+project の `scv/scv_settings.json` の `SCV_LANG`(`english`|`korean`|`japanese`) で生成言語を固定できます。未指定
 なら最新のユーザーメッセージに従い、判定できなければ英語を使用します。
 
 MIT © [wookiya1364](https://github.com/wookiya1364)

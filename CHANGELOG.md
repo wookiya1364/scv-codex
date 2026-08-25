@@ -2,6 +2,14 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.35.1-codex.1] — 2026-08-25
+
+### Core 0.35.1 동기화 — 문서 최신화
+
+- 문서가 현재를 말한다: 명령 없이도 SCV(SCV_ALWAYS_ON 기본 on), 설정 파일
+  자동 생성(27키), .env 미사용을 README(en/ko/ja)와 템플릿 문서에 반영.
+- Core pin 0.35.0 → 0.35.1. 동작 변화 없음.
+
 ## [0.35.0-codex.1] — 2026-08-25
 
 ### Core 0.35.0 동기화 — 실행 기록 첨부 + SCV_ALWAYS_ON
