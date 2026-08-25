@@ -2,6 +2,14 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.36.0-codex.1] — 2026-08-25
+
+### Core 0.36.0 동기화 — PR 증적 알림 + 영상 인지 속도
+
+- PR 생성/갱신 후 slug 증적(성공 포함)을 알림 채널에 게시 (SCV_PR_NOTIFY 기본 on).
+- 증적 영상이 임계(SCV_EVIDENCE_MIN_SECONDS, 기본 4초)보다 짧으면 경고.
+- Core pin 0.35.2 → 0.36.0.
+
 ## [0.35.2-codex.1] — 2026-08-25
 
 ### Core 0.35.2 동기화 — 문서 전면 재구성
