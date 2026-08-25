@@ -23,7 +23,10 @@ plan and tests → check every future change against what the team has shipped.
 
 You can talk to SCV naturally. For example, ask **“Use SCV to diagnose this
 project and tell me what to do next.”** Codex routes the request to the matching
-skill.
+skill. Since Core 0.35.0 that is the default posture: with `SCV_ALWAYS_ON`
+on (default) in `scv/scv_settings.json`, every free-conversation turn is
+routed through the help action's Mode decision — `off` restores command-only
+behavior.
 
 ```bash
 # 1. Add the repository as a Codex plugin marketplace.
@@ -218,9 +221,9 @@ but consequential external actions stay visible:
 - update and model-policy inspection are read-only;
 - archive entries are immutable; superseding work creates a new record.
 
-Set `SCV_LANG=en|ko|ja` in the project `.env` to choose durable generated
-language. Without it, SCV follows the latest user message and falls back to
-English.
+Set `SCV_LANG` (`english` | `korean` | `japanese`) in `scv/scv_settings.json`
+to choose durable generated language. Without it, SCV follows the latest user
+message and falls back to English.
 
 Core 0.22.0 adds a journal hook seam: two vendored templates capture free
 conversation into `scv/journal/`. Registration is host-owned and documented
@@ -247,9 +250,9 @@ without the action that produces it:
   path.
 - writing anywhere in the project outside `scv/`. Exempt: `*.md`, `.gitignore`,
   `.gitattributes`, `LICENSE`, and `.codex/config.toml`. `.env` deliberately is
-  not — the sanctioned `.env` writes go through
-  `plugins/scv/vendor/scv-core/core/scripts/env-set.sh` (Core 0.25.0+), a shell call that
-  never reaches the write rule at all.
+  not — SCV no longer reads or writes it (Core 0.32.0+): settings live under
+  `scv/` (`scv_settings.json` + a git-ignored secret file), written through
+  `settings-set.sh`, a path inside `scv/` the rule already allows.
 
 Both blocks lift for the rest of the session once a receipt exists. What mints
 one is decided by registration, and this wrapper registers two
@@ -276,7 +279,7 @@ outside-write rule. The contract is
 ### How the effort governor maps to this host (Core 0.29.0+)
 
 SCV judges each plan's execution band before implementing (`effort-class.sh`,
-three backtested rules; `SCV_EFFORT_MODE=auto|ask|off` in `.env`, default
+three backtested rules; `SCV_EFFORT_MODE=auto|ask|off` in `scv/scv_settings.json`, default
 `auto`). Your session effort setting is never touched — the governor shapes
 HOW the work runs. On this host the band-by-stage grid lands as:
 
