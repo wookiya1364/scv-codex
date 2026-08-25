@@ -1,13 +1,12 @@
 <div align="center">
 
-<img src="vendor/scv-core/core/assets/scv-circle.png" width="128" height="128" alt="SCV マスコット" />
+<img src="vendor/scv-core/core/assets/scv-circle.png" width="128" height="128" alt="SCV mascot" />
 
 # SCV for Codex
 
 **Standard · Cowork · Verify**
 
-元資料を承認可能なプランと実行可能テストへ精製し、プランを実装した後、
-承認済みテストを累積回帰 suite に残すプロセス中心の Codex plugin です。
+すべての変更は計画とテストとともに出荷され — テストは永遠に回り続けます。
 
 [リポジトリガイド](../../README.ja.md) ·
 [English](./README.md) · [한국어](./README.ko.md)
@@ -21,145 +20,33 @@ codex plugin marketplace add https://github.com/wookiya1364/scv-codex.git
 codex plugin add scv@scv-codex
 ```
 
-新しい Codex chat または CLI session を開始し、自然言語で依頼します。
+新しい Codex セッションを開始して、**普通に話しかけるだけ**:
 
 ```text
-SCV でこのプロジェクトを診断し、次にすることを教えて。
+SCV で — 決済画面に払い戻しボタンを付けたい。
 ```
 
-15 個の skill はすべて自然言語で呼び出せます。`$scv:help` は正確な
-skill を選ぶ任意の selector で、`/scv:help` は Claude Code の
-slash-command なのでここでは使用しません。
+SCV は既定で自由会話に加わります (`scv/scv_settings.json` の
+`SCV_ALWAYS_ON`; `off` = 明示的スキルのみ)。`$scv:help` が明示的なセレクター
+で、スキル表・設定・ガードレール・マルチレポの全ガイドは
+[リポジトリガイド](../../README.ja.md) にあります。
 
-## スキル
+## 入っているもの
 
-| スキル | 動作 |
-|---|---|
-| **`$scv:help`** | 状態診断、アイデア具体化、archive 検索、次の操作案内。 |
-| `$scv:status` | raw input、active plan、epic、workspace mode、handoff を要約。 |
-| `$scv:promote` | `scv/raw/` を PLAN、TESTS、feature architecture へ変換。 |
-| `$scv:work <slug>` | 実装、テスト、証拠収集、承認、archive、PR/MR 準備。 |
-| `$scv:codegen <slug>` | 実験的 TESTS-driven Red → Green loop。完了処理は `$scv:work` へ引き継ぐ。 |
-| `$scv:deck [<md>]` | Markdown を企画文書または DeckUI slide deck として render。 |
-| `$scv:update` | read-only version check と Codex marketplace 更新案内。 |
-| `$scv:regression` | 有効な全 archive のテスト手順を実行。 |
-| `$scv:routine <name>` | `scv/routines/` の maintenance routine を 1 件実行、一覧（`--list`）、検査（`--lint <file>`）。スケジュール登録は host 所有。 |
-| `$scv:report` | 設定済み Slack または Discord へフェーズ結果を報告。 |
-| `$scv:sync` | template merge と active plan・code scope・test 間の drift 検出。 |
-| `$scv:install-deps` | CLI 検出と同意ベースの install 支援。 |
-| `$scv:workspace` | nested umbrella workspace の作成、参加、確認、分離。 |
-| `$scv:handoff` | cross-repo 作業と文脈を記録。push と通知には同意が必要。 |
-| `$scv:set-models` | インストール済み skill を変更せず、legacy model-policy の意図と実際の Codex config を診断。 |
+- ループ: 資料 → 計画 + テスト → 実装 → アーカイブ → 蓄積される回帰。
+  `PLAN.md` が単一の原本で、証跡は PR/MR に付きます。
+- 設定は `scv/scv_settings.json` (自動生成、全キー説明つき) +
+  git-ignore される secret ファイル。`.env` は読みません。
+- ブロッキングな `PreToolUse` ガード (手作りの計画ファイル、`scv/` 外への
+  書き込み) — SCV アクションが一度動けば解除。内部エラー時は開く側、`scv/` の
+  ない場所では不活性、`SCV_GUARD=off` で停止。Codex フックはホットリロード
+  されないため、更新後は再起動 + `/hooks` で再承認。契約:
+  [`core/contracts/guard.md`](vendor/scv-core/core/contracts/guard.md)。
+- チェックサム固定の [scv-core](https://github.com/wookiya1364/scv-core)
+  ペイロードが `vendor/scv-core/` 配下に — 実行時に何も取得しません。
 
-## Codex 互換性
-
-workflow、repository layout、Bash helper、plan、test、archive、regression、
-deck 生成、multi-repo 調整は Claude Code wrapper と共有する pin 済み
-`vendor/scv-core` payload から提供されます。installed plugin は
-self-contained で、runtime に core を network 取得しません。
-
-wrapper, core, template version は別々に追跡します。core lock は source
-と payload checksum、および該当する場合は検証済み release artifact
-SHA-256 を記録します。`scv/SCV.md` が canonical で、既存の
-`CLAUDE.md` または `CODEX.md` state は変更せず読め、承認済み sync
-でのみ migration します。
-
-host の差が一つあります。Codex plugin skill は skill ごとに異なる model
-を pin できません。そのため `$scv:set-models` は旧
-`SCV_MODEL_POLICY` のための read-only migration 診断です。Anthropic
-model 名を推測で変換したり、インストール済み `SKILL.md` を変更したり
-しません。永続的な `.codex/config.toml` 変更には明示的依頼、対応確認、
-preview、確認が必要です。
-
-## ワークスペースガード (0.25.0-codex.2+)
-
-`hooks/hooks.json` が、あえてブロックする `PreToolUse` ガードを登録します。拒否
-するのは 2 つです。`scv/promote/<slug>/` の `PLAN.md`, `TESTS.md`,
-`FEATURE_ARCHITECTURE.md` を手で新規作成すること、そして `scv/` の外へ書き込む
-こと。すでにあるプランファイルの編集は常に許可します。`*.md`, `.gitignore`,
-`.gitattributes`, `LICENSE`, `.codex/config.toml` は免除で、`.env` は免除しません
-— SCV はもう `.env` を読みも書きもしません (Core 0.32.0+): 設定は `scv/` 配下の
-2 ファイル (`scv_settings.json` + git-ignore される secret ファイル) にあり、
-`settings-set.sh` で書きます。`scv/` 内のパスなので書き込み規則にはかかりません。
-
-どちらの block も、session に receipt ができた時点でその session の間は解けます。
-ここで登録する entry は 2 つ — `Bash`, `shell`, `local_shell` 向けの `gate-bash`
-と、`apply_patch`, `Write`, `Edit`, `MultiEdit` 向けの `gate-write` です。独立した
-mint entry はありません。Codex には発行の根拠にできる skill 呼び出しイベントが
-ないためです。receipt は gate-bash 側で、コマンドが vendored な `core/scripts/`
-ディレクトリを名指したときに発行されます。Core の protocol はどれも何かを書く前に
-その呼び出しを行います。0.28.0 から `SCV_GUARD_SCRIPTS` がコロン区切りで
-`adapter/scripts/` も監視するため、アダプター経由の
-`$scv:update`・`$scv:set-models`・`$scv:sync` も同じように発行します。
-どちらのコマンドも plugin ディレクトリを
-`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` から解決します。`CODEX_PLUGIN_ROOT` と
-いう変数は存在せず、その名前を書いたことが `0.25.0-codex.1` でガードが無効のまま
-出荷された原因です。このファイルは plugin root の既定パスにあるため、
-`.codex-plugin/plugin.json` は今も `hooks` キーを宣言しません。
-
-ガードは**開いた側**へ倒れます — 内部エラーでは stderr に 1 行出して動作を許可
-します — そして `scv/` ディレクトリのないプロジェクトでは何もしません。完全に
-無効化するには `SCV_GUARD=off` を export してください。ファイルではなくプロセス
-環境からのみ読むので、リポジトリの中の何かが自分を免除することはできません。
-`SCV_GUARD_RULE_B=off` はプランのルールだけを残します。契約は
-[`vendor/scv-core/core/contracts/guard.md`](vendor/scv-core/core/contracts/guard.md)
-です。
-
-Codex の hook についての運用メモが 2 つ。hook は hot-reload されないので、plugin を
-更新したら Codex を再起動してください。そして信頼は hook の内容に紐づきます —
-`guard.sh` が変わったリリースは、`/hooks` で承認し直すまで何も強制しません。
-
-## Effort governor (Core 0.29.0+)
-
-`$scv:work` と `$scv:codegen` は実装前に計画の実行バンドを判定し、それに
-合わせて実行の形を調整します — セッションの effort 設定には触れません。
-project の `scv/scv_settings.json` の `SCV_EFFORT_MODE=auto|ask|off` で制御し、既定の `auto` は
-1 行の通知を出してそのまま進みます。`off` はこのステップ全体をスキップ
-します — 分類器を一切呼ばず、何も出力せず、この機能以前と完全に同じ動作を
-します。このホストには subagent fan-out がないため、orchestration バンドの
-検証は順次の multi-lens パスへ degrade します — バンド×ステージの対応全体は
-[リポジトリガイド](../../README.ja.md)の「effort governor がこのホストで
-どう対応するか」節を参照してください。契約は
-[`vendor/scv-core/core/protocols/work.md`](vendor/scv-core/core/protocols/work.md)
-の Step 5e です。
-
-## Journal hook seam (Core 0.22.0+)
-
-Core 0.22.0 は自由会話をコミットされる team journal（`scv/journal/`）へ
-記録する hook template 2 種
-（`vendor/scv-core/core/template/hooks/on-user-prompt.sh`、`on-stop.sh`）
-を同梱します。hook 登録は wrapper/host 所有です。上のガードは登録済みで
-出荷されますが、journal の 2 つは違います。Codex plugin 表面は prompt 原文や
-JSONL transcript path を plugin コマンドへ渡さないため、Codex host での
-登録は文書化されたユーザー操作です — イベント対応、stdin JSON 契約、
-`SCV_CORE_ROOT` export、non-blocking・redaction 保証は
-[`references/journal-hooks.md`](references/journal-hooks.md) を参照して
-ください。host が JSONL transcript を提供しない場合、turn-end 登録は
-省略します。seam 契約はこの部分実装を許容し、現在この wrapper がその
-ギャップに該当します。
-
-## 安全性と更新
-
-archive の前にテスト合格と承認が必要です。push、PR/MR 作成、通知、
-dependency install、永続 Codex config 変更は consent gate を保ちます。
-`$scv:update` と model-policy 検査は read-only です。
-
-Deck dependency、build、生成済み deck JSON は pin 済み Core payload を
-key とする外部 cache に置きます。maintainer update では旧 vendor または
-legacy plugin-root `DeckUI` の既知 runtime だけを stable snapshot から
-additive に copy し、source は変更も削除もしません。検証済み Core tree
-は owner lock の下で置換し、catchable failure では以前の tree を正確に
-復元します。
-
-```bash
-codex plugin marketplace upgrade scv-codex
-codex plugin add scv@scv-codex
-```
-
-更新後、新しい Codex session を開始してください。project template も
-merge する場合は `$scv:sync` を別途実行します。
-
-project の `scv/scv_settings.json` の `SCV_LANG`(`english`|`korean`|`japanese`) で生成言語を固定できます。未指定
-なら最新のユーザーメッセージに従い、判定できなければ英語を使用します。
+更新: `codex plugin marketplace upgrade scv-codex` →
+`codex plugin add scv@scv-codex` → 新セッション。プロジェクトテンプレートの
+更新は別途 `$scv:sync`。
 
 MIT © [wookiya1364](https://github.com/wookiya1364)
