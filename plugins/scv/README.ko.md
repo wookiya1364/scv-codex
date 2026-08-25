@@ -78,8 +78,9 @@ model 이름을 추측으로 치환하거나 설치된 `SKILL.md`를 수정하�
 `FEATURE_ARCHITECTURE.md`를 손으로 새로 만드는 것, 그리고 `scv/` 밖 어디든 쓰는
 것. 이미 있는 계획 파일 수정은 언제나 허용합니다. `*.md`, `.gitignore`,
 `.gitattributes`, `LICENSE`, `.codex/config.toml`은 면제이고 `.env`는 아닙니다 —
-허용된 `.env` 쓰기는 `vendor/scv-core/core/scripts/env-set.sh`를 거치기
-때문입니다.
+SCV 는 더 이상 `.env` 를 읽지도 쓰지도 않습니다 (Core 0.32.0+): 설정은 `scv/`
+아래 두 파일(`scv_settings.json` + git 무시되는 비밀 파일)이며
+`settings-set.sh` 로 씁니다 — `scv/` 안쪽 경로라 쓰기 규칙에 걸리지 않습니다.
 
 두 차단 모두 세션에 영수증이 생기는 순간 그 세션 동안 풀립니다. 여기서 등록하는
 항목은 둘입니다 — `Bash`, `shell`, `local_shell`용 `gate-bash`, 그리고
@@ -110,7 +111,7 @@ Codex를 다시 시작하세요. 그리고 신뢰는 훅의 내용에 묶입니�
 
 `$scv:work` 와 `$scv:codegen` 이 구현 전에 계획의 실행 밴드를 판정하고, 그에
 맞춰 실행 방식을 조절합니다 — 세션의 effort 설정은 건드리지 않습니다. 프로젝트
-`.env` 의 `SCV_EFFORT_MODE=auto|ask|off` 로 제어하며, 기본값 `auto` 는 한 줄
+`scv/scv_settings.json` 의 `SCV_EFFORT_MODE=auto|ask|off` 로 제어하며, 기본값 `auto` 는 한 줄
 통지 후 그대로 진행합니다. `off` 는 이 단계를 통째로 건너뜁니다 — 분류기를
 아예 호출하지 않고, 아무것도 출력하지 않고, 이 기능 이전과 완전히 동일하게
 실행합니다. 이 호스트에는 서브에이전트 팬아웃이 없으므로 orchestration 밴드의
@@ -155,7 +156,7 @@ codex plugin add scv@scv-codex
 갱신 후 새 Codex 세션을 시작하세요. 프로젝트 template까지 병합하려면
 `$scv:sync`를 별도로 실행합니다.
 
-프로젝트 `.env`의 `SCV_LANG=en|ko|ja`로 생성 언어를 고정할 수 있습니다.
+프로젝트 `scv/scv_settings.json` 의 `SCV_LANG`(`english`|`korean`|`japanese`)으로 생성 언어를 고정할 수 있습니다.
 없으면 최신 사용자 메시지의 언어를 따르고, 판단할 수 없으면 영어를 씁니다.
 
 MIT © [wookiya1364](https://github.com/wookiya1364)
