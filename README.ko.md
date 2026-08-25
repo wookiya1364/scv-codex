@@ -23,7 +23,9 @@
 
 SCV에는 자연어로 말하면 됩니다. 예를 들어 **“SCV로 이 프로젝트 상태를
 진단하고 다음 할 일을 알려줘”**라고 요청하면 Codex가 알맞은 스킬로
-연결합니다.
+연결합니다. Core 0.35.0 부터는 이것이 기본 자세입니다: `scv/scv_settings.json`
+의 `SCV_ALWAYS_ON` 이 on(기본)이면 모든 일반 대화 턴이 help 액션의 Mode
+판정을 거칩니다 — `off` 가 명령 전용 동작으로 되돌립니다.
 
 ```bash
 # 1. 이 저장소를 Codex 플러그인 마켓플레이스로 추가합니다.
@@ -214,8 +216,9 @@ Google Docs, Notion 자료는 복사하지 않고 `refs:`로 연결합니다. PR
 - update와 model-policy 검사는 read-only입니다.
 - archive는 immutable이며, 변경된 요구는 새 기록으로 supersede합니다.
 
-프로젝트 `.env`에 `SCV_LANG=en|ko|ja`를 지정하면 생성 문서의 언어를
-고정합니다. 없으면 최신 사용자 메시지의 언어를 따르고, 판단할 수 없으면
+프로젝트 `scv/scv_settings.json` 에 `SCV_LANG`(`english`|`korean`|`japanese`)을
+지정하면 생성 문서의 언어를 고정할 수 있습니다. 지정하지 않으면 최근 사용자
+메시지를 따르고, 마지막에는 영어로 떨어집니다.
 영어를 사용합니다.
 
 Core 0.22.0은 journal 훅 seam을 추가합니다: 벤더링된 템플릿 2종이
@@ -240,9 +243,10 @@ Core 0.23.0부터 그 journal은 **기본 gitignore**입니다. 기록이 둘이
   손으로 **새로 만드는 것**. 이미 있는 파일 수정은 언제나 허용합니다 — `<TODO>`를
   채우고 `status:`를 옮기는 게 정상 경로입니다.
 - `scv/` 밖 어디든 쓰는 것. 면제는 `*.md`, `.gitignore`, `.gitattributes`,
-  `LICENSE`, 그리고 `.codex/config.toml`입니다. `.env`는 일부러 면제가 아닙니다 —
-  허용된 `.env` 쓰기는 `plugins/scv/vendor/scv-core/core/scripts/env-set.sh`(Core 0.25.0+)를
-  거치고, 그건 shell 호출이라 쓰기 규칙에 닿지 않습니다.
+  `LICENSE`, 그리고 `.codex/config.toml`입니다. `.env`는 일부러 면제가 아닙니다 — SCV 는 더 이상 `.env` 를 읽지도 쓰지도
+  않습니다 (Core 0.32.0+): 설정은 `scv/` 아래 두 파일(`scv_settings.json` +
+  git 무시되는 비밀 파일)이며 `settings-set.sh` 로 씁니다. `scv/` 안쪽 경로라
+  쓰기 규칙에 원래 걸리지 않습니다.
 
 두 차단 모두 세션에 영수증이 하나 생기면 그 세션 동안 풀립니다. 무엇이 영수증을
 발급하는지는 등록이 정합니다. 이 wrapper는 항목 두 개를 등록합니다. shell
@@ -266,7 +270,7 @@ SCV를 쓰지 않는 저장소에서는 아무 일도 하지 않고, 내부 오�
 ### effort governor 가 이 호스트에서 매핑되는 방식 (Core 0.29.0+)
 
 SCV 는 구현 전에 계획의 실행 밴드를 판정합니다(`effort-class.sh`, 백테스트 통과
-3규칙; `.env` 의 `SCV_EFFORT_MODE=auto|ask|off`, 기본 `auto`). 세션 effort 설정은
+3규칙; `scv/scv_settings.json` 의 `SCV_EFFORT_MODE=auto|ask|off`, 기본 `auto`). 세션 effort 설정은
 건드리지 않습니다 — 거버너가 조절하는 것은 실행 방식입니다. 이 호스트의
 밴드×단계 격자:
 

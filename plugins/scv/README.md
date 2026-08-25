@@ -28,9 +28,12 @@ Start a new Codex chat or CLI session, then ask naturally:
 Use SCV to diagnose this project and tell me what to do next.
 ```
 
-Codex can invoke all 15 skills from natural language. `$scv:help` is an
-optional exact selector; `/scv:help` is a Claude Code slash command and is not
-used here.
+Codex can invoke all 15 skills from natural language. Since Core 0.35.0 that
+is the default posture: with `SCV_ALWAYS_ON` on (default) in
+`scv/scv_settings.json`, every free-conversation turn is routed through the
+help action's Mode decision — `off` restores command-only behavior.
+`$scv:help` is an optional exact selector; `/scv:help` is a Claude Code slash
+command and is not used here.
 
 ## Skills
 
@@ -79,8 +82,9 @@ denies two things: hand-creating `PLAN.md`, `TESTS.md`, or
 `FEATURE_ARCHITECTURE.md` under `scv/promote/<slug>/`, and writing anywhere
 outside `scv/`. Editing a plan file that already exists is always allowed.
 `*.md`, `.gitignore`, `.gitattributes`, `LICENSE`, and `.codex/config.toml` are
-exempt; `.env` is not, because the sanctioned `.env` writes go through
-`vendor/scv-core/core/scripts/env-set.sh` instead.
+exempt; `.env` is not — SCV no longer reads or writes it (Core 0.32.0+): settings live
+under `scv/` (`scv_settings.json` + a git-ignored secret file), written through
+`settings-set.sh`, a path inside `scv/` the rule already allows.
 
 Both blocks lift for the rest of the session as soon as a receipt exists. Two
 entries are registered here — `gate-bash` for `Bash`, `shell`, and `local_shell`,
@@ -112,8 +116,8 @@ that changes `guard.sh` leaves you unenforced until you approve it again through
 
 `$scv:work` and `$scv:codegen` judge each plan's execution band before
 implementing and shape HOW the work runs to match — your session effort
-setting is never touched. Set `SCV_EFFORT_MODE=auto|ask|off` in the project
-`.env`; the default is `auto`, which prints one notice line and proceeds.
+setting is never touched. Set `SCV_EFFORT_MODE=auto|ask|off` in the project's
+`scv/scv_settings.json`; the default is `auto`, which prints one notice line and proceeds.
 `off` skips the step entirely: the classifier is never invoked, nothing is
 printed, and execution is exactly what it was before this feature. This host
 has no subagent fan-out, so the orchestration band's verification degrades to
@@ -162,8 +166,8 @@ codex plugin add scv@scv-codex
 Then start a new Codex session. Run `$scv:sync` separately if you also want to
 merge the newer project templates.
 
-Set `SCV_LANG=en|ko|ja` in the project `.env` for a persistent generated
-language. Otherwise SCV follows the latest user message and falls back to
-English.
+Set `SCV_LANG` (`english` | `korean` | `japanese`) in `scv/scv_settings.json`
+for a persistent generated language. Otherwise SCV follows the latest user
+message and falls back to English.
 
 MIT © [wookiya1364](https://github.com/wookiya1364)
