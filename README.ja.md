@@ -23,7 +23,9 @@ archive → 今後の変更をこれまで出荷した挙動と照合します�
 
 SCV には自然言語で依頼できます。たとえば **「SCV でこのプロジェクトを
 診断し、次にすることを教えて」** と頼むと、Codex が対応する skill へ
-route します。
+route します。Core 0.35.0 からはこれが既定の姿勢です: `scv/scv_settings.json`
+の `SCV_ALWAYS_ON` が on (既定) なら、すべての自由会話ターンが help アクション
+の Mode 判定を通ります — `off` でコマンド専用に戻せます。
 
 ```bash
 # 1. このリポジトリを Codex plugin marketplace として追加します。
@@ -214,8 +216,9 @@ Confluence、Google Docs、Notion の資料はコピーせず `refs:` でリン�
 - update と model-policy 検査は read-only です。
 - archive は immutable。変更要件は新しい record で supersede します。
 
-プロジェクトの `.env` に `SCV_LANG=en|ko|ja` を指定すると生成言語を
-固定できます。未指定なら直近のユーザーメッセージに従い、判定できなければ
+プロジェクトの `scv/scv_settings.json` に `SCV_LANG`(`english`|`korean`|`japanese`)
+を指定すると生成言語を固定できます。未指定なら最新のユーザーメッセージに従い、
+最後は英語になります。
 英語へ fallback します。
 
 Core 0.22.0 は journal hook seam を追加します: vendored template 2 種が
@@ -241,9 +244,10 @@ Core 0.23.0 からこの journal は**既定で gitignore** です。記録が 2
   手で**新規作成**すること。すでにあるファイルの編集は常に許可します —
   `<TODO>` を埋め、`status:` を進めるのは正規の経路です。
 - `scv/` の外へ書き込むこと。免除は `*.md`, `.gitignore`, `.gitattributes`,
-  `LICENSE`、そして `.codex/config.toml` です。`.env` はあえて免除しません —
-  許可された `.env` 書き込みは `plugins/scv/vendor/scv-core/core/scripts/env-set.sh`
-  (Core 0.25.0+) を通り、これは shell 呼び出しなので書き込みルールに触れません。
+  `LICENSE`、そして `.codex/config.toml` です。`.env` はあえて免除しません — SCV はもう `.env` を読みも書きもしません
+  (Core 0.32.0+): 設定は `scv/` 配下の 2 ファイル (`scv_settings.json` +
+  git-ignore される secret ファイル) にあり、`settings-set.sh` で書きます。
+  `scv/` 内のパスなので書き込み規則には元々かかりません。
 
 どちらの block も、session に receipt が 1 つできればその session の間は解けます。
 何が receipt を発行するかを決めるのは登録側で、この wrapper は 2 つの entry を
@@ -269,7 +273,7 @@ SCV を採用していないリポジトリでは何もせず、内部エラー�
 ### effort governor がこのホストでどう対応するか (Core 0.29.0+)
 
 SCV は実装前に計画の実行バンドを判定します(`effort-class.sh`、バックテストを
-通過した 3 規則。`.env` の `SCV_EFFORT_MODE=auto|ask|off`、既定は `auto`)。
+通過した 3 規則。`scv/scv_settings.json` の `SCV_EFFORT_MODE=auto|ask|off`、既定は `auto`)。
 セッションの effort 設定には触れません — governor が変えるのは実行の形です。
 このホストでのバンド×段階の対応:
 
