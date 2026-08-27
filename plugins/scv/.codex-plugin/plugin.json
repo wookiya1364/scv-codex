@@ -1,6 +1,6 @@
 {
   "name": "scv",
-  "version": "0.37.0-codex.1",
+  "version": "0.38.0-codex.1",
   "description": "A thin Codex adapter for pinned SCV Core. Turn every change into an approved plan and executable tests, then retain those tests as a durable regression suite.",
   "author": {
     "name": "wookiya1364",
