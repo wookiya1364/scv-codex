@@ -49,9 +49,12 @@ Installed skills and plugin tools are loaded at the new-session boundary.
 
 ### Step 4 — Project template sync
 
-Updating the plugin does not modify the current project's `scv/` directory.
-Recommend `$scv:sync` separately when the user wants the newer template merged
-into the project.
+Updating the plugin does not modify the current project's `scv/` directory —
+and the user does not have to. In the new session, the first Core-scripted
+action compares the project's stamped template against the payload's and
+refreshes the workflow docs when they differ, reporting what it did. Tell the
+user that, not to run a sync. `$scv:sync` stays the by-hand re-run and the
+interactive path for pre-2.x projects, which the automatic refresh skips.
 
 ## Never
 
