@@ -46,7 +46,7 @@ guide live in the [repository guide](../../README.md).
   payload under `vendor/scv-core/` — nothing fetched at runtime.
 
 To update: `codex plugin marketplace upgrade scv-codex` →
-`codex plugin add scv@scv-codex` → new session. Run `$scv:sync` separately to
-merge newer project templates.
+`codex plugin add scv@scv-codex` → new session. The project's templates then
+refresh themselves on the first action of that session — and say so.
 
 MIT © [wookiya1364](https://github.com/wookiya1364)
