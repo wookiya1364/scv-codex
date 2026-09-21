@@ -19,6 +19,10 @@ bash tools/set-wrapper-version.sh "$VERSION"
 # 2. Add the CHANGELOG entry and docs/releases/$VERSION.md, then open a
 #    pull request into `develop` and merge it. Its title needs
 #    [no-plan: <reason>] — see below.
+#    The notes end with an "올리는 법" block. The command that upgrades an
+#    installed plugin is `codex plugin marketplace upgrade scv-codex` followed by
+#    `codex plugin add scv@scv-codex` (re-adding is idempotent and picks up the new
+#    version) — `codex plugin update` does not exist in codex-cli 0.144.
 
 # 3. Promote, tag, and publish.
 gh workflow run promote.yml -f notes_file="docs/releases/$VERSION.md"
