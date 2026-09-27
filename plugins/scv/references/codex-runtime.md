@@ -155,3 +155,13 @@ another action:
   authorized the complete workflow; or
 - give the exact optional selector, such as `$scv:work`, when a fresh decision
   or session is required.
+
+## Your model id (per-model prompting)
+
+The help protocol asks you to pass your own model id (`--model "<your model id>"`) so SCV can
+point you at the official prompting guide for that model, kept offline in
+`$SCV_PLUGIN_ROOT/prompting/`. When your instructions do not state your model id, read it from
+the active Codex configuration: the `model = "..."` line of `$CODEX_HOME/config.toml` (default
+`~/.codex/config.toml`), where a `[profiles.<name>]` table for the active profile or a
+`-m/--model` launch flag overrides it. Pass that value exactly. If you still cannot determine
+it, omit `--model`; help then answers `GUIDE: none` and nothing else changes.
