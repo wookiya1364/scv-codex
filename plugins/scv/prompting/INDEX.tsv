@@ -1,0 +1,17 @@
+# SCV per-model prompting guides — offline copies of the official guides (see refresh.sh).
+# Format (tab-separated): <model id> <key> <file> <source .md url> <fetched YYYY-MM-DD>. "*" = common guide for every model.
+# Model ids match exactly after lowercasing and dropping a trailing [..] marker — never by prefix.
+@holder	OpenAI
+@refresh	refresh.sh
+gpt-6-astra	gpt-6	gpt-6.md	https://developers.openai.com/api/docs/guides/latest-model/gpt-6-astra.md	2026-09-27
+gpt-6-sol	gpt-6	gpt-6.md	https://developers.openai.com/api/docs/guides/latest-model/gpt-6-astra.md	2026-09-27
+gpt-6-luna	gpt-6	gpt-6.md	https://developers.openai.com/api/docs/guides/latest-model/gpt-6-astra.md	2026-09-27
+gpt-5.6-sol	gpt-5-6	gpt-5-6.md	https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6.md	2026-09-27
+gpt-5.6-terra	gpt-5-6	gpt-5-6.md	https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6.md	2026-09-27
+gpt-5.6-luna	gpt-5-6	gpt-5-6.md	https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6.md	2026-09-27
+gpt-5.3-codex	codex	codex.md	https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide.md	2026-09-27
+gpt-5.1-codex-max	codex	codex.md	https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide.md	2026-09-27
+gpt-5.2	gpt-5-2	gpt-5-2.md	https://developers.openai.com/cookbook/examples/gpt-5/gpt-5-2_prompting_guide.md	2026-09-27
+gpt-5.1	gpt-5-1	gpt-5-1.md	https://developers.openai.com/cookbook/examples/gpt-5/gpt-5-1_prompting_guide.md	2026-09-27
+gpt-5	gpt-5	gpt-5.md	https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_prompting_guide.md	2026-09-27
+*	prompt-engineering	prompt-engineering.md	https://developers.openai.com/api/docs/guides/prompt-engineering.md	2026-09-27
