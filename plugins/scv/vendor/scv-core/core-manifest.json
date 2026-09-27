@@ -78,7 +78,7 @@
     {"path": "core/contracts/purity.md", "sha256": "757e62c8c56b8d6234d1a5b5bbe6b9f739649738665bb2996e561e41d0a8418a", "size": 5575},
     {"path": "core/contracts/recording.md", "sha256": "53c012e8e4de0d13fcfd081092cb3d4ade87473c0eeddcfc90391d7a851bb1ba", "size": 2563},
     {"path": "core/docs/legacy/design/nested-multirepo-scv.md", "sha256": "8e3212a257e4c1e535fdde1a49ae011cf80d91620f64df7f784885d6bf9760a3", "size": 18538},
-    {"path": "core/host-profile.env", "sha256": "89ec2d98ad522975d7124eb8a352f56a66e6279747130f36d118927c80c40965", "size": 523},
+    {"path": "core/host-profile.env", "sha256": "02de35854c971ab399f293ece7c851a7ac8c6587f06fed8ce0d87e1a143e4ec7", "size": 563},
     {"path": "core/integrations/loop-runner.md", "sha256": "e0e96efd0d6f079d8b43831744aaaef9c6bae7ac49bdb0cfdad4e754099b8d4b", "size": 6871},
     {"path": "core/manifest.json", "sha256": "b4111914d2fe3017d8d6eb270e5bcf72c2fa106006a1f486529867fa95f465c8", "size": 486},
     {"path": "core/protocols/codegen.md", "sha256": "e2d4c763d200c8a22277e2acb939517a6c02465f33fb64b96d33869b05fcc841", "size": 14852},
