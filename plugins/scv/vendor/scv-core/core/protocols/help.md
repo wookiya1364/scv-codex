@@ -113,7 +113,7 @@ bash "${SCV_CORE_ROOT}/scripts/help.sh"
 With a request:
 
 ```!
-bash "${SCV_CORE_ROOT}/scripts/help.sh" --with-context
+bash "${SCV_CORE_ROOT}/scripts/help.sh" --with-context --model "<id>"
 ```
 
 Parse `ARG_CONTEXT:` (`none` → Mode A · `provided` → Mode B/B'), `UNFINISHED_CONVERSATIONS:`,
