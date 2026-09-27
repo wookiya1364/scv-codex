@@ -2,6 +2,15 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.59.0-codex.1] — 2026-09-27
+
+### Core 0.59.1 동기화 — 모델별 프롬프팅
+
+- help 가 지금 답하는 모델의 공식 프롬프팅 가이드 원문(OpenAI, 오프라인 사본 7 · 모델 id 11)을 읽고, 요청을 그 기준으로 다시 써 보인 뒤 그것으로 일한다. 못 찾는 빈 곳만 추천 답과 함께 소크라테스식으로 묻는다.
+- `plugins/scv/prompting/` — 색인 · 원문 · `refresh.sh` · `check.sh`. 호스트 프로필에 `SCV_PROMPTING_GUIDES=../../../prompting`.
+- 런타임 참조: 모델 id 를 모르면 코덱스 설정의 `model` 줄에서.
+- Core pin 0.58.1 → 0.59.1 (0.59.1 은 코덱스 사본의 help 규약 합계 상한을 넘던 것을 고친 패치).
+
 ## [0.58.0-codex.1] — 2026-09-21
 
 ### Core 0.58.0 동기화 — 과정 계기판
