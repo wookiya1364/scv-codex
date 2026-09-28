@@ -1,0 +1,5 @@
+# source: gpt-5-6.md
+authorization	State the action level allowed: explain only, local change, or external write	Define what level of action each request authorizes so the model can continue safe, in-scope work without unnecessary pauses while stopping before external, destructive, costly, or scope-expanding actions.
+work-layer	State the current layer of work: research, design, implementation, or review	Distinguish research, design, implementation, review, and external coordination so the model does not silently move from one layer to another.
+evidence	For grounded answers, state what needs support and what is enough evidence	Define what needs support, what counts as enough evidence, and how to behave when evidence is missing.
+preserve	For edits or rewrites, state what must be kept (length, structure, claims)	For editing, rewriting, summaries, and customer-facing drafts, tell the model what to preserve
