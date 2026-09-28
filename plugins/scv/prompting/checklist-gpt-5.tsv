@@ -1,0 +1,5 @@
+# source: gpt-5.md
+search-depth	State how much exploration or context gathering to do before acting	Define clear criteria in your prompt for how you want the model to explore the problem space.
+one-task	Keep one separable task per request; split the rest into later turns	Moreover, we observe peak performance when distinct, separable tasks are broken up across multiple agent turns, with one turn for each task.
+conflicts	If instructions conflict, state which one takes priority	However, its careful instruction-following behavior means that poorly-constructed prompts containing contradictory or vague instructions can be more damaging to GPT-5 than to other models
+code-style	State code style preferences and edge cases the change must handle	This includes areas like verbosity control, subjective code style preferences, and sensitivity to edge cases.
