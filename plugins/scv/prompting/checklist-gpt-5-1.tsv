@@ -1,0 +1,4 @@
+# source: gpt-5-1.md
+length	State how long or detailed the answer should be	While overall more detailed, GPT-5.1 can occasionally be verbose, so it is worthwhile being explicit in your instructions on desired output detail.
+conflicts	If instructions conflict, state which one takes priority	For other behavior issues, GPT-5.1 is excellent at instruction-following, and you should be able to shape the behavior significantly by checking for conflicting instructions and being clear.
+design-system	For UI work, name the design system or tokens the result must follow	When building frontend interfaces, GPT-5.1 can be steered to produce websites that match your visual design system.

@@ -1,0 +1,4 @@
+# source: gpt-5-2.md
+length	State concrete length limits for the answer (sentences or bullets)	Give **clear and concrete length constraints** especially in enterprise and coding agents.
+schema	For extraction, give the exact output schema and required vs optional fields	Always provide a schema or JSON shape for the output.
+research-bar	For research, state how deep to search and whether to cite sources	Specify the research bar up front: Tell the model how you want to perform search. Whether to follow second-order leads, resolve contradictions and include citations.
