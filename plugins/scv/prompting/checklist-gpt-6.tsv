@@ -1,0 +1,5 @@
+# source: gpt-6.md
+autonomy	Say whether to proceed on reasonable assumptions instead of stopping to ask	This can cause it to stop when the user may expect it to make reasonable assumptions and persist.
+writing-style	State the writing style: prose or lists, and how much formatting	The model tends toward detailed, formatted responses and may use recurring phrases across sessions. Specify the writing style and structure your application needs.
+audience	State the reader's background knowledge so the writing can be calibrated	Communicate complex concepts in a clear and cohesive manner, and calibrate your writing to the level of background knowledge assumed from the user's prompt and context.
+test-depth	State how much testing the change needs; small edits need less	For coding tasks, calibrate how much testing and verification a change requires.
