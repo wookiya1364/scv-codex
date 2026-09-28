@@ -1,0 +1,9 @@
+# source: prompt-engineering.md
+goal	State what the model should do: the goal to achieve	A reasoning model is like a senior co-worker. You can give them a goal to achieve and trust them to work out the details.
+context	Give the background information and data the task depends on	Give the model any additional information it might need to generate a response, like private/proprietary data outside its training data, or any other data you know will be particularly relevant.
+finish	State what must be true for the request to count as fully done	Instruct the model to resolve the full query before yielding control, decomposing it into sub-tasks and reflecting after each tool call to confirm completeness.
+scope	State what is in scope and what must never be done or touched	What rules should it follow? What should the model do, and what should the model never do?
+output	Describe the specific output wanted: form, format, and constraints	A GPT model is like a junior coworker. They'll perform best with explicit instructions to create a specific output.
+stop	Say which assumptions must be confirmed before acting	Ask the model to confirm design assumptions, scaffold projects, enforce standards, integrate APIs, test states, and document code.
+examples	Give sample inputs with desired outputs when a pattern must be matched	When providing examples, try to show a diverse range of possible inputs with the desired outputs.
+verify	State how the result should be tested or validated	Instruct the model to test changes with unit tests or Python commands, and validate patches carefully since tools like `apply_patch` may return “Done” even on failure.
