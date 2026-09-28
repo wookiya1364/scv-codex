@@ -85,6 +85,9 @@ jobs:
           bash plugins/scv/tests/test-vendor-core.sh
           bash plugins/scv/tests/test-vendor-core-atomicity.sh
 
+      - name: Check prompting guides and checklist quotes
+        run: bash plugins/scv/prompting/check.sh
+
   core:
     name: Vendored SCV Core regressions
     needs: validate
