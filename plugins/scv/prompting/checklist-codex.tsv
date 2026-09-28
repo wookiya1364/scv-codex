@@ -1,0 +1,4 @@
+# source: codex.md
+deliverable	Say if only a plan or review is wanted; otherwise working code is expected	Unless asked for a plan, never end the interaction with only a plan.
+authorization	Say whether destructive actions (git reset, revert, amend) are approved	**NEVER** use destructive commands like `git reset --hard` or `git checkout --` unless specifically requested or approved by the user.
+design-system	For UI work, say whether to keep an existing design system or go new	Exception: If working within an existing website or design system, preserve the established patterns, structure, and visual language.
