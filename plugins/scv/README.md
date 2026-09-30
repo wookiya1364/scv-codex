@@ -42,6 +42,10 @@ guide live in the [repository guide](../../README.md).
   `SCV_GUARD=off` disables. Codex hooks are not hot-reloaded: restart Codex
   after updating and re-approve via `/hooks`. Contract:
   [`core/contracts/guard.md`](vendor/scv-core/core/contracts/guard.md).
+- Per-model prompting: OpenAI's official prompting guides for the GPT and
+  Codex models ship under `prompting/`; each request is compared with the
+  running model's checklist item by item, and the rewritten request is quoted
+  right after the answer's conclusion (`SCV_MODEL_PROMPTING`).
 - A pinned, checksummed [scv-core](https://github.com/wookiya1364/scv-core)
   payload under `vendor/scv-core/` — nothing fetched at runtime.
 
