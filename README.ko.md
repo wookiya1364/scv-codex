@@ -34,6 +34,16 @@ codex plugin add scv@scv-codex
 - **macOS**: `brew install bash` 한 번 (bash 4+). **Linux / WSL**: 할 것 없음.
 - 권장 CLI: `git`, `curl`, `jq`, `gh` (또는 `glab`).
 
+**업데이트**하고 나서 새 세션을 시작하세요:
+
+```bash
+codex plugin marketplace upgrade scv-codex
+codex plugin add scv@scv-codex
+```
+
+그러면 각 프로젝트가 그 세션의 첫 액션에서 SCV 파일을 스스로 갱신하고, 갱신했다고
+말해 줍니다.
+
 ## 쓰는 법
 
 **그냥 말 걸면 됩니다.** SCV가 기본으로 대화에 끼어듭니다:
@@ -45,9 +55,17 @@ SCV:  (대화 모드 진입 — 목표 / 범위 / 인수 기준을 묻고,
 ```
 
 만들고 싶은 걸 말하면 계획으로 다듬고, 다음 할 일을 물으면 저장소를 진단하고,
-과거 작업을 물으면 아카이브를 검색합니다. `$scv:help`는 명시적 선택자이고,
-`scv/scv_settings.json`의 `SCV_ALWAYS_ON=off`가 명령 전용으로 되돌립니다.
-(`/scv:<name>`은 Claude Code 표기 — 여기서는 안 씁니다.)
+과거 작업을 물으면 제목만이 아니라 계획 본문, 테스트, 결정, 대화까지 찾습니다.
+`$scv:help`는 명시적 선택자이고, `scv/scv_settings.json`의 `SCV_ALWAYS_ON=off`가
+명령 전용으로 되돌립니다. (`/scv:<name>`은 Claude Code 표기 — 여기서는 안 씁니다.)
+
+SCV는 매 턴 이런 일도 합니다:
+
+- **쉬운 말로 답합니다** — 한두 문장의 결론이 먼저, 그다음 예시 하나, 코드 값은
+  물어볼 때만 (`SCV_PLAIN_LANGUAGE`);
+- **모델 회사가 권하는 방식으로 모델에 요청합니다** — GPT 와 Codex 모델용 OpenAI
+  공식 프롬프팅 가이드를 싣고, 요청을 지금 모델의 요구 항목과 하나씩 비교해 다시
+  쓴 요청을 결론 바로 뒤에 인용합니다 (`SCV_MODEL_PROMPTING`).
 
 모든 대화 뒤의 루프: 자료 → 계획 + 테스트 → 구현 → 아카이브 → 회귀.
 아카이브는 무덤이 아닙니다 — 오래 쓸수록 안전망이 두꺼워집니다.
@@ -58,8 +76,12 @@ SCV:  (대화 모드 진입 — 목표 / 범위 / 인수 기준을 묻고,
 |---|---|
 | AI 디프를 믿기 전에 직접 돌려봐야 한다 | 합의된 테스트가 관문으로 돌고, e2e 증적이 실제 실행 기록 기준으로 PR/MR에 붙는다 |
 | 같은 변경이 티켓 · PR · 채팅에서 다르게 적혀 있다 | `PLAN.md`가 단일 원본; 티켓은 `refs:` 링크 |
-| 결정이 세션과 함께 사라진다 | `scv/DECISIONS.md` — 추가 전용, 자동 기록 |
+| 결정이 세션과 함께 사라진다 | `scv/DECISIONS.md` — 추가 전용, 자동 기록, 교훈도 함께 |
 | 옛 기능이 소리 없이 깨진다 | 아카이브된 모든 계획의 테스트가 하나의 스위트로 재실행 |
+| 계획서가 글자 벽이다 | `$scv:deck`이 계획의 그림 문서(`FEATURE_ARCHITECTURE.md`)를 번호식 화면설계서로 그린다 |
+| 변경이 어디까지 닿을지 모른다 | 문서 · 계획 · 함께 바뀌는 파일을 잇는 SCV 자체 그래프 (`SCV_GRAPH`); Graft가 설치돼 있으면 코드 후보도 (`SCV_GRAFT`) |
+| "이거 전에 해 봤나?" | 지난 작업 찾기가 계획 본문, 테스트, 결정, 대화까지 읽는다 — [지난 작업 찾기](plugins/scv/vendor/scv-core/core/protocols/help/archive-search.md) 참조 |
+| 과정이 잘 돌고 있는지 모른다 | `metrics.sh`가 프로젝트의 기록을 과정 숫자로 바꿔 보여 준다 — 읽기만 한다 |
 
 ## 설정
 
@@ -70,11 +92,16 @@ SCV:  (대화 모드 진입 — 목표 / 범위 / 인수 기준을 묻고,
 |---|---|---|
 | `SCV_ALWAYS_ON` | `on` | 일반 대화에도 SCV; `off` = 명시적 스킬만 |
 | `SCV_PLAIN_LANGUAGE` | `on` | 쉬운말 우선; `off`로 끔 |
+| `SCV_MODEL_PROMPTING` | `on` | 모델별 프롬프팅: 모델의 가이드를 읽고 매 요청을 비교 · 등록 |
 | `SCV_LANG` | 자동 | `english` · `korean` · `japanese` |
 | `NOTIFIER_PROVIDER` | 꺼짐 | `slack` 또는 `discord` |
 
+나머지 키와 기본값:
+[`scv_settings.example.json`](plugins/scv/vendor/scv-core/core/template/scv/scv_settings.example.json).
+
 ```bash
 bash plugins/scv/vendor/scv-core/core/scripts/settings-set.sh SCV_LANG=korean
+bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # 과정 숫자
 ```
 
 ## 스킬
@@ -83,13 +110,13 @@ bash plugins/scv/vendor/scv-core/core/scripts/settings-set.sh SCV_LANG=korean
 
 | 스킬 | 하는 일 |
 |---|---|
-| `$scv:help` | 진단 · 아이디어 다듬기 · 아카이브 검색 |
+| `$scv:help` | 진단 · 아이디어 다듬기 · 지난 작업 찾기 |
 | `$scv:status` | 진행 중인 것 |
 | `$scv:promote` | 자료 → 계획 + 테스트 + 다이어그램 |
 | `$scv:work <slug>` | 구현 · 테스트 · 아카이브 · 증적 붙은 PR/MR |
 | `$scv:codegen <slug>` | TDD-first 변형 (테스트가 코드를 이끈다) |
 | `$scv:regression` | 아카이브된 모든 계획의 테스트 실행 |
-| `$scv:deck [<md>]` | 마크다운 → 기획서 문서 / 슬라이드 |
+| `$scv:deck [<md>]` | 계획 → 번호식 화면설계서 (마크다운 → 기획서 문서 / 슬라이드도) |
 | `$scv:report` | 페이즈 결과를 Slack/Discord로 |
 | `$scv:sync` | 템플릿 갱신 + 드리프트 감지 |
 | `$scv:routine <name>` | 파일 하나짜리 유지보수 루틴 |
@@ -126,10 +153,12 @@ Codex 훅은 핫리로드가 안 됩니다: 플러그인 업데이트 후 Codex�
 
 동작은 [scv-core](https://github.com/wookiya1364/scv-core)에 살고,
 `plugins/scv/vendor/scv-core/` 아래 체크섬과 함께 벤더링됩니다 — 런타임에
-아무것도 내려받지 않습니다. 래퍼·코어·템플릿 버전은 독립적으로 움직이고,
-코어 락이 원본·아티팩트 해시를 기록합니다. 싱크 봇이 `chore/core-*` PR로 핀
-갱신을 제안하며, 릴리스는 `develop → stage → main`을
-`gh workflow run promote.yml`로 걷습니다 — [docs/RELEASING.md](docs/RELEASING.md).
+아무것도 내려받지 않습니다. 프롬프팅 가이드는 `plugins/scv/prompting/` 아래
+OpenAI 공식 가이드 원문 그대로 있고, 요구 항목의 인용이 원문에 글자 그대로
+있는지 CI가 검사합니다. 래퍼·코어·템플릿 버전은 독립적으로 움직이고, 코어
+락이 원본·아티팩트 해시를 기록합니다. 싱크 봇이 `chore/core-*` PR로 핀 갱신을
+제안하며, 릴리스는 `develop → stage → main`을 `gh workflow run promote.yml`로
+걷습니다 — [docs/RELEASING.md](docs/RELEASING.md).
 
 ## 출처와 라이선스
 
