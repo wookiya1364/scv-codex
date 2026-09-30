@@ -35,6 +35,16 @@ codex plugin add scv@scv-codex
 - **macOS**: `brew install bash` を一度 (bash 4+)。**Linux / WSL**: 何も不要。
 - 推奨 CLI: `git`, `curl`, `jq`, `gh` (または `glab`)。
 
+**更新**したら、新しいセッションを開始してください:
+
+```bash
+codex plugin marketplace upgrade scv-codex
+codex plugin add scv@scv-codex
+```
+
+すると各プロジェクトは、そのセッションの最初のアクションで SCV のファイルを
+自ら更新し、更新したことを伝えます。
+
 ## 使い方
 
 **普通に話しかけるだけ。** SCV は既定で会話に加わります:
@@ -46,9 +56,19 @@ SCV:    (会話モードに入り、目標 / 範囲 / 受け入れ基準を質�
 ```
 
 作りたいことを話せば計画に磨き上げ、次にすべきことを聞けばリポジトリを診断し、
-過去の作業を聞けばアーカイブを検索します。`$scv:help` は明示的なセレクター、
-`scv/scv_settings.json` の `SCV_ALWAYS_ON=off` でコマンド専用に戻せます。
-(`/scv:<name>` は Claude Code の表記 — ここでは使いません。)
+過去の作業を聞けばタイトルだけでなく計画の本文、テスト、決定、会話まで探します。
+`$scv:help` は明示的なセレクター、`scv/scv_settings.json` の
+`SCV_ALWAYS_ON=off` でコマンド専用に戻せます。(`/scv:<name>` は Claude Code
+の表記 — ここでは使いません。)
+
+SCV は毎ターン、次のことも行います:
+
+- **やさしい言葉で答えます** — 一、二文の結論が先、次に例を一つ、コードの値は
+  聞かれたときだけ (`SCV_PLAIN_LANGUAGE`);
+- **モデルの提供元が勧めるやり方でモデルに依頼します** — GPT と Codex モデル向けの
+  OpenAI 公式プロンプティングガイドを同梱し、依頼を実行中のモデルの要求項目と
+  一つずつ照合して、書き直した依頼を結論のすぐ後に引用します
+  (`SCV_MODEL_PROMPTING`)。
 
 すべての会話の裏のループ: 資料 → 計画 + テスト → 実装 → アーカイブ → 回帰。
 アーカイブは墓場ではありません — 長く使うほど安全網が厚くなります。
@@ -59,8 +79,12 @@ SCV:    (会話モードに入り、目標 / 範囲 / 受け入れ基準を質�
 |---|---|
 | AI の diff を信じる前に自分で動かしている | 合意済みテストがゲートとして回り、e2e 証跡が実際の実行記録に基づいて PR/MR に付く |
 | 同じ変更がチケット · PR · チャットで違って書かれる | `PLAN.md` が単一の原本; チケットは `refs:` リンク |
-| 決定がセッションとともに消える | `scv/DECISIONS.md` — 追記専用、自動記録 |
+| 決定がセッションとともに消える | `scv/DECISIONS.md` — 追記専用、自動記録、教訓も一緒に |
 | 古い機能が音もなく壊れる | アーカイブされた全計画のテストがひとつのスイートで再実行 |
+| 計画書が文字の壁になる | `$scv:deck` が計画の図の文書 (`FEATURE_ARCHITECTURE.md`) を番号付き画面設計書として描く |
+| 変更がどこまで及ぶかわからない | 文書 · 計画 · 一緒に変わるファイルをつなぐ SCV 独自のグラフ (`SCV_GRAPH`); Graft が入っていればコード候補も (`SCV_GRAFT`) |
+| 「これ、前に試した?」 | 過去の作業の検索が計画本文、テスト、決定、会話まで読む — [過去の作業の検索](plugins/scv/vendor/scv-core/core/protocols/help/archive-search.md) を参照 |
+| プロセスがうまく回っているかわからない | `metrics.sh` がプロジェクトの記録をプロセスの数字にして見せる — 読むだけ |
 
 ## 設定
 
@@ -71,11 +95,16 @@ SCV:    (会話モードに入り、目標 / 範囲 / 受け入れ基準を質�
 |---|---|---|
 | `SCV_ALWAYS_ON` | `on` | 自由会話にも SCV; `off` = 明示的スキルのみ |
 | `SCV_PLAIN_LANGUAGE` | `on` | やさしい言葉優先; `off` で停止 |
+| `SCV_MODEL_PROMPTING` | `on` | モデル別プロンプティング: モデルのガイドを読み、毎回の依頼を照合 · 登録 |
 | `SCV_LANG` | 自動 | `english` · `korean` · `japanese` |
 | `NOTIFIER_PROVIDER` | オフ | `slack` か `discord` |
 
+その他のキーと既定値:
+[`scv_settings.example.json`](plugins/scv/vendor/scv-core/core/template/scv/scv_settings.example.json)。
+
 ```bash
 bash plugins/scv/vendor/scv-core/core/scripts/settings-set.sh SCV_LANG=japanese
+bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # プロセスの数字
 ```
 
 ## スキル
@@ -84,13 +113,13 @@ bash plugins/scv/vendor/scv-core/core/scripts/settings-set.sh SCV_LANG=japanese
 
 | スキル | 役割 |
 |---|---|
-| `$scv:help` | 診断 · アイデアの具体化 · アーカイブ検索 |
+| `$scv:help` | 診断 · アイデアの具体化 · 過去の作業の検索 |
 | `$scv:status` | 進行中のもの |
 | `$scv:promote` | 資料 → 計画 + テスト + 図 |
 | `$scv:work <slug>` | 実装 · テスト · アーカイブ · 証跡つき PR/MR |
 | `$scv:codegen <slug>` | TDD-first 変種 (テストがコードを導く) |
 | `$scv:regression` | アーカイブされた全計画のテストを実行 |
-| `$scv:deck [<md>]` | Markdown → 企画書ドキュメント / スライド |
+| `$scv:deck [<md>]` | 計画 → 番号付き画面設計書 (Markdown → 企画書ドキュメント / スライドも) |
 | `$scv:report` | フェーズ結果を Slack/Discord へ |
 | `$scv:sync` | テンプレート更新 + ドリフト検知 |
 | `$scv:routine <name>` | 1 ファイルのメンテナンスルーチン |
@@ -128,7 +157,9 @@ Codex のフックはホットリロードされません: プラグイン更新
 
 動作は [scv-core](https://github.com/wookiya1364/scv-core) にあり、
 `plugins/scv/vendor/scv-core/` 配下にチェックサムつきでベンダリングされます —
-実行時に何も取得しません。ラッパー・コア・テンプレートのバージョンは独立に
+実行時に何も取得しません。プロンプティングガイドは `plugins/scv/prompting/`
+以下に OpenAI 公式ガイドの原文そのままで置かれ、要求項目の引用が原文に一字一句
+あるかを CI が検査します。ラッパー・コア・テンプレートのバージョンは独立に
 動き、コアロックが原本・アーティファクトのハッシュを記録します。同期ボットが
 `chore/core-*` PR でピン更新を提案し、リリースは `develop → stage → main` を
 `gh workflow run promote.yml` で歩きます — [docs/RELEASING.md](docs/RELEASING.md)。

@@ -42,11 +42,14 @@ SCV는 기본으로 일반 대화에 끼어듭니다 (`scv/scv_settings.json`의
   무반응, `SCV_GUARD=off`로 끔. Codex 훅은 핫리로드가 안 되니 업데이트 후
   재시작 + `/hooks` 재승인. 계약:
   [`core/contracts/guard.md`](vendor/scv-core/core/contracts/guard.md).
+- 모델별 프롬프팅: GPT 와 Codex 모델용 OpenAI 공식 프롬프팅 가이드가
+  `prompting/` 아래 들어 있고, 요청을 지금 모델의 요구 항목과 하나씩 비교해
+  다시 쓴 요청을 답의 결론 바로 뒤에 인용합니다 (`SCV_MODEL_PROMPTING`).
 - 체크섬 고정된 [scv-core](https://github.com/wookiya1364/scv-core) 페이로드가
   `vendor/scv-core/` 아래에 — 런타임에 아무것도 내려받지 않습니다.
 
 업데이트: `codex plugin marketplace upgrade scv-codex` →
-`codex plugin add scv@scv-codex` → 새 세션. 프로젝트 템플릿 갱신은 별도로
-`$scv:sync`.
+`codex plugin add scv@scv-codex` → 새 세션. 그러면 프로젝트 템플릿이 그 세션의
+첫 액션에서 스스로 갱신되고, 갱신했다고 말해 줍니다.
 
 MIT © [wookiya1364](https://github.com/wookiya1364)
