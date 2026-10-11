@@ -32,6 +32,8 @@ Parse:
 | `no` | Report installed → latest, then show Step 3. |
 | `unknown` | Surface the exact diagnostic reason. Ask whether the user still wants the manual refresh commands. |
 
+These reports name versions on purpose (the user acts on them); where that differs from the always-on plain-language text, the resolution order in `scv/SCV.md` Top-level rules applies.
+
 ### Step 3 — Guide the Codex refresh
 
 Substitute the parsed names:
