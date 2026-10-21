@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Dreams"
+  short_description: "Look back at past sessions and coach better prompts"
+  default_prompt: "Use $scv:dreams to look back at this project's past sessions and suggest better prompts."
+
+policy:
+  allow_implicit_invocation: true
