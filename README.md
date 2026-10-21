@@ -124,6 +124,7 @@ Conversation routes for you; the explicit selectors:
 | `$scv:report` | Phase result to Slack/Discord |
 | `$scv:sync` | Refresh templates + drift detection |
 | `$scv:routine <name>` | One-file maintenance routines |
+| `$scv:dreams` | Look back at past sessions · coach better prompts |
 | `$scv:workspace` · `$scv:handoff` | Multi-repo umbrella · cross-repo declaration |
 | `$scv:update` · `$scv:set-models` · `$scv:install-deps` | Update guide · model-policy diagnostic · CLI deps |
 
