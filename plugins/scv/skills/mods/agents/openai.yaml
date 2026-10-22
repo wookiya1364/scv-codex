@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Mods"
+  short_description: "Explain that SCV mods are Claude desktop-app plugins"
+  default_prompt: "Use $scv:mods to update and list SCV mods."
+
+policy:
+  allow_implicit_invocation: true

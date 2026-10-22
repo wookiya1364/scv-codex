@@ -18,6 +18,9 @@ EXPECTED_SKILLS=(
   handoff
   help
   install-deps
+  mods
+  mods-install
+  mods-remove
   promote
   regression
   report
@@ -209,7 +212,7 @@ mapfile -t actual_skills < <(
     | sort
 )
 if [[ "${actual_skills[*]}" == "${EXPECTED_SKILLS[*]}" ]]; then
-  ok "skill set exactly matches the 16 core actions"
+  ok "skill set exactly matches the 19 core actions"
 else
   fail "skill set mismatch: ${actual_skills[*]}"
 fi
@@ -239,7 +242,7 @@ for skill in "${EXPECTED_SKILLS[@]}"; do
 
   assert_contains "$skill_file" "../../references/codex-runtime.md" \
     "$skill: reads the Codex adapter"
-  if [[ "$skill" == "update" || "$skill" == "set-models" ]]; then
+  if [[ "$skill" == "update" || "$skill" == "set-models" || "$skill" == mods* ]]; then
     assert_contains "$skill_file" "../../adapter/protocols/$skill.md" \
       "$skill: reads its adapter-owned protocol"
   else
@@ -263,11 +266,11 @@ plugin = Path(sys.argv[2])
 actions = actions_doc.get("actions", actions_doc)
 if isinstance(actions, dict):
     actions = [{"id": key, **value} for key, value in actions.items()]
-assert len(actions) == 16
+assert len(actions) == 19
 catalog = {item["id"]: item for item in actions}
 assert set(catalog) == {path.name for path in (plugin / "skills").iterdir() if path.is_dir()}
 for name, action in catalog.items():
-    if name in {"update", "set-models"}:
+    if name in {"update", "set-models", "mods", "mods-install", "mods-remove"}:
         assert action["owner"] == "adapter"
         assert action["entrypoint"] is None
     else:
@@ -275,7 +278,7 @@ for name, action in catalog.items():
         assert action["entrypoint"]
 PY
 then
-  ok "core action catalog has exactly two adapter-owned actions"
+  ok "core action catalog has exactly five adapter-owned actions"
 else
   fail "core action ownership does not match the Codex wrapper"
 fi
@@ -343,6 +346,11 @@ assert_contains "$PLUGIN_ROOT/references/codex-runtime.md" \
 assert_contains "$PLUGIN_ROOT/references/codex-runtime.md" \
   '"${SCV_ARGS[@]}"' \
   "runtime documents array-based argument passing"
+for mods_action in mods mods-install mods-remove; do
+  assert_contains "$PLUGIN_ROOT/adapter/protocols/$mods_action.md" \
+    "Codex has no SCV mods" \
+    "$mods_action protocol says Codex has no mods"
+done
 assert_contains "$PLUGIN_ROOT/adapter/template/scv/CODEX.md" \
   "<!-- SCV:HOST-POINTER target=SCV.md -->" \
   "Codex pointer uses the shared pointer contract"
