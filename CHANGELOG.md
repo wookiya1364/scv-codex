@@ -2,6 +2,13 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.70.0-codex.1] — 2026-10-23
+
+### Core 0.70.0 동기화 — 모드 명령 셋
+
+- 새 명령 `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove`(명령 19개). Codex 에는 SCV 모드가 없어 세 명령 모두 아무것도 실행하지 않고 'Codex has no SCV mods' 한 줄로 답한다.
+- Claude 래퍼 0.70.0 에서는 같은 명령이 모드를 업데이트 · 설치 · 삭제한다. `$scv:update` 는 그대로다.
+
 ## [0.69.1-codex.1] — 2026-10-22
 
 ### Core 0.69.1 동기화 — 안내를 자동 라우팅에 맞춤
