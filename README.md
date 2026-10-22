@@ -125,6 +125,7 @@ Conversation routes for you; the explicit selectors:
 | `$scv:sync` | Refresh templates + drift detection |
 | `$scv:routine <name>` | One-file maintenance routines |
 | `$scv:dreams` | Look back at past sessions · coach better prompts |
+| `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | SCV mods are Claude desktop-app plugins — Codex says so in one line |
 | `$scv:workspace` · `$scv:handoff` | Multi-repo umbrella · cross-repo declaration |
 | `$scv:update` · `$scv:set-models` · `$scv:install-deps` | Update guide · model-policy diagnostic · CLI deps |
 

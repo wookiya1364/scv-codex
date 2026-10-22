@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Mods"
+  short_description: "Explain that SCV mods are Claude desktop-app plugins"
+  default_prompt: "Use $scv:mods-remove to remove an SCV mod."
+
+policy:
+  allow_implicit_invocation: true

@@ -121,6 +121,7 @@ bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # 과정 숫자
 | `$scv:sync` | 템플릿 갱신 + 드리프트 감지 |
 | `$scv:routine <name>` | 파일 하나짜리 유지보수 루틴 |
 | `$scv:dreams` | 지난 세션을 돌아보며 더 좋은 프롬프트 코칭 |
+| `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | SCV 모드는 Claude 데스크톱 앱 플러그인 — Codex 는 한 줄로 안내 |
 | `$scv:workspace` · `$scv:handoff` | 멀티레포 우산 · 타 저장소 작업 선언 |
 | `$scv:update` · `$scv:set-models` · `$scv:install-deps` | 업데이트 안내 · 모델 정책 진단 · CLI 의존성 |
 
