@@ -251,15 +251,15 @@ else:
 
 skill_names = sorted(path.parent.name for path in plugin.glob("skills/*/SKILL.md"))
 action_names = sorted(actions)
-if len(action_names) != 16:
-    raise SystemExit(f"expected 16 core actions, got {len(action_names)}")
+if len(action_names) != 19:
+    raise SystemExit(f"expected 19 core actions, got {len(action_names)}")
 if action_names != skill_names:
     raise SystemExit(f"skill/action mismatch: actions={action_names}, skills={skill_names}")
 
 for name, action in actions.items():
     owner = action.get("owner")
     entrypoint = action.get("entrypoint")
-    if name in {"update", "set-models"}:
+    if name in {"update", "set-models", "mods", "mods-install", "mods-remove"}:
         if owner != "adapter" or entrypoint is not None:
             raise SystemExit(f"{name}: expected adapter owner and null entrypoint")
         protocol = plugin / f"adapter/protocols/{name}.md"
@@ -285,7 +285,7 @@ for skill_file in plugin.glob("skills/*/SKILL.md"):
     name = skill_file.parent.name
     expected = (
         f"../../adapter/protocols/{name}.md"
-        if name in {"update", "set-models"}
+        if name in {"update", "set-models", "mods", "mods-install", "mods-remove"}
         else f"../../vendor/scv-core/core/protocols/{name}.md"
     )
     if expected not in text:
