@@ -2,6 +2,12 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.70.0-codex.2] — 2026-10-23
+
+### 모드 이름 scv-dashboard 맞춤
+
+- 모드 명령 설명의 예시 이름이 `scv-hello` 에서 `scv-dashboard` 로 바뀌었다(scv-mods 의 이름 바꿈). 동작은 그대로다.
+
 ## [0.70.0-codex.1] — 2026-10-23
 
 ### Core 0.70.0 동기화 — 모드 명령 셋
