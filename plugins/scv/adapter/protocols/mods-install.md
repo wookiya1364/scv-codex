@@ -1,6 +1,6 @@
 # $scv:mods-install
 
-Codex has no SCV mods. SCV mods (for example `scv-hello`, the SCV pane) are
+Codex has no SCV mods. SCV mods (for example `scv-dashboard`, the SCV pane) are
 Claude Code desktop-app plugins; the Claude wrapper's mods commands install,
 update and remove them there.
 

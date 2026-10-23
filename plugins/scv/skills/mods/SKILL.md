@@ -1,6 +1,6 @@
 ---
 name: mods
-description: "Codex has no SCV mods (Claude desktop-app plugins such as scv-hello) — answer in one line. Use when the user asks to update and list SCV mods, or invokes $scv:mods."
+description: "Codex has no SCV mods (Claude desktop-app plugins such as scv-dashboard) — answer in one line. Use when the user asks to update and list SCV mods, or invokes $scv:mods."
 ---
 
 # SCV Mods

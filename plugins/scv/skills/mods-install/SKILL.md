@@ -1,6 +1,6 @@
 ---
 name: mods-install
-description: "Codex has no SCV mods (Claude desktop-app plugins such as scv-hello) — answer in one line. Use when the user asks to install an SCV mod, or invokes $scv:mods-install."
+description: "Codex has no SCV mods (Claude desktop-app plugins such as scv-dashboard) — answer in one line. Use when the user asks to install an SCV mod, or invokes $scv:mods-install."
 ---
 
 # SCV Mods
