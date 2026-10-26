@@ -4,11 +4,11 @@
 set -euo pipefail
 
 [[ $# -eq 1 ]] || {
-  echo "usage: tools/set-wrapper-version.sh <X.Y.Z-codex.N>" >&2
+  echo "usage: tools/set-wrapper-version.sh <X.Y.Z-codex.N | X.Y.Z-dev.<commit7> | X.Y.Z-stage.<commit7>>" >&2
   exit 2
 }
 VERSION_VALUE="$1"
-[[ "$VERSION_VALUE" =~ ^[0-9]+\.[0-9]+\.[0-9]+-codex\.[0-9]+$ ]] || {
+[[ "$VERSION_VALUE" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(codex\.[0-9]+|dev\.[0-9a-f]{7}|stage\.[0-9a-f]{7})$ ]] || {
   echo "error: invalid Codex wrapper version: $VERSION_VALUE" >&2
   exit 2
 }
