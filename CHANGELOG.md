@@ -2,6 +2,12 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.71.0-codex.1] — 2026-10-26
+
+### Core 0.71.0 동기화 — `$scv:channel`
+
+- 설치된 SCV 를 개발 · 스테이징 · 운영 채널 사이에서 바꿔 끼운다(`--ref channel/<채널>`). 채널 브랜치는 `channel-sync.yml` 이 다시 만든다.
+
 ## [0.70.4-codex.1] — 2026-10-25
 
 ### Core 0.70.4 동기화 — 작업 시작 때 단계 줄 연결 경고
