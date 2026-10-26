@@ -46,6 +46,7 @@ jobs:
       - name: Validate the self-contained plugin contract
         run: |
           bash plugins/scv/tests/test-codex-plugin.sh
+          bash plugins/scv/tests/test-channel-engine.sh
           bash plugins/scv/tests/test-guard-registration.sh
 
       - name: Check Bash syntax

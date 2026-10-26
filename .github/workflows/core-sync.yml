@@ -101,6 +101,7 @@ jobs:
           )
           PY
           bash plugins/scv/tests/test-codex-plugin.sh
+          bash plugins/scv/tests/test-channel-engine.sh
           bash plugins/scv/tests/test-shared-core-adapter.sh
           bash plugins/scv/tests/test-apply-model-policy.sh
           bash plugins/scv/tests/test-vendor-core.sh

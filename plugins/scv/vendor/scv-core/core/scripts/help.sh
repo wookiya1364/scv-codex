@@ -228,6 +228,7 @@ Skills
   action:dreams     Look back over past sessions — requests per archived plan + prompt tips (HTML report)
   $scv:update     Codex marketplace update guide
   action:mods       Update the installed SCV mods and list them (mods-install / mods-remove pick one)
+  action:channel    Switch the installed SCV between dev / stage / prod (try new work before a release)
   $scv:set-models Explain Codex session-level model selection compatibility
 
 EOF
