@@ -125,6 +125,7 @@ bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # プロセスの�
 | `$scv:routine <name>` | 1 ファイルのメンテナンスルーチン |
 | `$scv:dreams` | 過去のセッションを振り返り、より良いプロンプトを助言 |
 | `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | SCV モッドは Claude デスクトップアプリのプラグイン — Codex は一行で案内 |
+| `$scv:channel` | SCV を開発 · ステージング · 本番チャネルに切り替え — リリース前に新しい作業を確認 |
 | `$scv:workspace` · `$scv:handoff` | マルチレポのアンブレラ · 他リポジトリ作業の宣言 |
 | `$scv:update` · `$scv:set-models` · `$scv:install-deps` | 更新案内 · モデルポリシー診断 · CLI 依存 |
 
