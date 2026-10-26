@@ -236,7 +236,7 @@ root_release_version = (repo / "VERSION").read_text().strip()
 if plugin_manifest["version"] != release_version or release_version != root_release_version:
     raise SystemExit("root, plugin, and manifest release versions differ")
 wrapper_match = re.fullmatch(
-    r"(\d+\.\d+\.\d+)-codex\.(\d+)", release_version
+    r"(\d+\.\d+\.\d+)-(?:codex\.\d+|dev\.[0-9a-f]{7}|stage\.[0-9a-f]{7})", release_version
 )
 if not wrapper_match:
     raise SystemExit(f"unexpected Codex wrapper version: {release_version}")
@@ -251,15 +251,15 @@ else:
 
 skill_names = sorted(path.parent.name for path in plugin.glob("skills/*/SKILL.md"))
 action_names = sorted(actions)
-if len(action_names) != 19:
-    raise SystemExit(f"expected 19 core actions, got {len(action_names)}")
+if len(action_names) != 20:
+    raise SystemExit(f"expected 20 core actions, got {len(action_names)}")
 if action_names != skill_names:
     raise SystemExit(f"skill/action mismatch: actions={action_names}, skills={skill_names}")
 
 for name, action in actions.items():
     owner = action.get("owner")
     entrypoint = action.get("entrypoint")
-    if name in {"update", "set-models", "mods", "mods-install", "mods-remove"}:
+    if name in {"update", "set-models", "mods", "mods-install", "mods-remove", "channel"}:
         if owner != "adapter" or entrypoint is not None:
             raise SystemExit(f"{name}: expected adapter owner and null entrypoint")
         protocol = plugin / f"adapter/protocols/{name}.md"
@@ -285,7 +285,7 @@ for skill_file in plugin.glob("skills/*/SKILL.md"):
     name = skill_file.parent.name
     expected = (
         f"../../adapter/protocols/{name}.md"
-        if name in {"update", "set-models", "mods", "mods-install", "mods-remove"}
+        if name in {"update", "set-models", "mods", "mods-install", "mods-remove", "channel"}
         else f"../../vendor/scv-core/core/protocols/{name}.md"
     )
     if expected not in text:
