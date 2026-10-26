@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Channel"
+  short_description: "Switch SCV between dev, stage and prod"
+  default_prompt: "Use $scv:channel to switch SCV between the dev, stage and prod channels."
+
+policy:
+  allow_implicit_invocation: true
