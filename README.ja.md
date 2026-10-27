@@ -68,10 +68,38 @@ SCV は毎ターン、次のことも行います:
 - **モデルの提供元が勧めるやり方でモデルに依頼します** — GPT と Codex モデル向けの
   OpenAI 公式プロンプティングガイドを同梱し、依頼を実行中のモデルの要求項目と
   一つずつ照合して、書き直した依頼を結論のすぐ後に引用します
-  (`SCV_MODEL_PROMPTING`)。
+  (`SCV_MODEL_PROMPTING`);
+- **実物を動かして見せます** — 成果物が変わるターンでは、最初に動く瞬間に最小の
+  ものを実際に実行し、その結果 (コマンド出力 · 画面 · 関数の結果) をそのまま見せ、
+  続けるか直すかを一度聞きます。何も変わらなければ「成果物の変化なし」と書き、
+  何も聞きません (`SCV_SHOW_REAL`)。
+
+Codex では動かないもの: **再開サマリー** (`SCV_RESUME_RECAP`)。Claude Code ではセッション
+開始フックが `/clear`、圧縮、再開のあとに進行中の計画と最近の決定を載せ直します。Codex には
+セッション開始フックがないため — このプラグインが登録するのは `PreToolUse`、`UserPromptSubmit`、
+`Stop` だけです — 再開サマリーはここでは動かず、この設定も効果がありません。
 
 すべての会話の裏のループ: 資料 → 計画 + テスト → 実装 → アーカイブ → 回帰。
 アーカイブは墓場ではありません — 長く使うほど安全網が厚くなります。
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#1e1e1e','primaryTextColor':'#fff','primaryBorderColor':'#9096a8','lineColor':'#e7e9f0','secondaryColor':'#2d2d2d','tertiaryColor':'#1e1e1e','background':'#171922','edgeLabelBackground':'#171922'}}}%%
+flowchart LR
+  Raw["scv/raw/<br>資料"]
+  Promote["計画 + テスト<br>(scv/promote/)"]
+  Work["実装<br>+ テスト実行"]
+  Archive["scv/archive/"]
+  Regression["回帰<br>(アーカイブ済みテスト全部)"]
+
+  Raw -->|"会話"| Promote
+  Promote --> Work
+  Work -->|"テスト通過 + 承認"| Archive
+  Archive --> Regression
+  Regression -.->|"次の変更の安全網"| Promote
+
+  classDef key fill:#FFE082,stroke:#F57C00,stroke-width:2px,color:#000
+  class Promote,Regression key
+```
 
 ## 得られるもの
 
@@ -96,6 +124,8 @@ SCV は毎ターン、次のことも行います:
 | `SCV_ALWAYS_ON` | `on` | 自由会話にも SCV; `off` = 明示的スキルのみ |
 | `SCV_PLAIN_LANGUAGE` | `on` | やさしい言葉優先; `off` で停止 |
 | `SCV_MODEL_PROMPTING` | `on` | モデル別プロンプティング: モデルのガイドを読み、毎回の依頼を照合 · 登録 |
+| `SCV_SHOW_REAL` | `on` | 成果物が変わると最小のものを実際に動かして結果を見せる; `off` で止める |
+| `SCV_RESUME_RECAP` | `on` | Codex では効果なし (セッション開始フックがない) |
 | `SCV_LANG` | 自動 | `english` · `korean` · `japanese` |
 | `NOTIFIER_PROVIDER` | オフ | `slack` か `discord` |
 
@@ -166,6 +196,31 @@ Codex のフックはホットリロードされません: プラグイン更新
 動き、コアロックが原本・アーティファクトのハッシュを記録します。同期ボットが
 `chore/core-*` PR でピン更新を提案し、リリースは `develop → stage → main` を
 `gh workflow run promote.yml` で歩きます — [docs/RELEASING.md](docs/RELEASING.md)。
+
+部品のつながり — Core はホストごとのプラグインにベンダリングされ、チャンネルが
+インストールするビルドを選び、モッドは Claude デスクトップアプリ専用のプラグインです:
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#1e1e1e','primaryTextColor':'#fff','primaryBorderColor':'#9096a8','lineColor':'#e7e9f0','secondaryColor':'#2d2d2d','tertiaryColor':'#1e1e1e','background':'#171922','edgeLabelBackground':'#171922'}}}%%
+flowchart TB
+  Core["SCV Core<br>(scv-core)"]
+  Claude["Claude Code プラグイン<br>(scv-claude-code)"]
+  Codex["Codex プラグイン<br>(scv-codex)"]
+  Core -->|"ベンダリング、バージョン固定"| Claude
+  Core -->|"ベンダリング、バージョン固定"| Codex
+  subgraph Channels["リリースチャンネル — $scv:channel で差し替え"]
+    Dev["dev<br>ブランチ channel/dev<br>ラッパー develop + Core develop"]
+    Stage["stage<br>ブランチ channel/stage<br>ラッパー stage + Core stage"]
+    Prod["prod<br>最新リリース (既定)"]
+  end
+  Codex --> Channels
+  Channels -->|"一度にインストールするチャンネルは一つ"| You["自分の Codex"]
+  Mods["SCV モッドマーケットプレイス (scv-mods)<br>例: scv-dashboard — SCV ペイン"]
+  Mods -.->|"Claude デスクトップアプリ専用"| Claude
+
+  classDef key fill:#FFE082,stroke:#F57C00,stroke-width:2px,color:#000
+  class Core,Codex key
+```
 
 ## 出自とライセンス
 
