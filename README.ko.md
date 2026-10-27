@@ -65,10 +65,38 @@ SCV는 매 턴 이런 일도 합니다:
   물어볼 때만 (`SCV_PLAIN_LANGUAGE`);
 - **모델 회사가 권하는 방식으로 모델에 요청합니다** — GPT 와 Codex 모델용 OpenAI
   공식 프롬프팅 가이드를 싣고, 요청을 지금 모델의 요구 항목과 하나씩 비교해 다시
-  쓴 요청을 결론 바로 뒤에 인용합니다 (`SCV_MODEL_PROMPTING`).
+  쓴 요청을 결론 바로 뒤에 인용합니다 (`SCV_MODEL_PROMPTING`);
+- **실제로 돌려 보여 줍니다** — 결과물이 바뀌는 턴이면 처음 돌아가는 순간 가장
+  작은 것을 실제로 실행해 그 결과(명령 출력 · 화면 · 함수 결과)를 그대로 보이고,
+  계속할지 고칠지를 한 번 묻습니다. 바뀌는 것이 없으면 "결과물 변화 없음"이라고
+  적고 묻지 않습니다 (`SCV_SHOW_REAL`).
+
+Codex에서는 안 되는 것: **재개 요약** (`SCV_RESUME_RECAP`). Claude Code에서는 세션 시작
+훅이 `/clear`, 압축, 재개 뒤에 진행 중인 계획과 최근 결정을 다시 실어 줍니다. Codex에는
+세션 시작 훅이 없어서 — 이 플러그인은 `PreToolUse`, `UserPromptSubmit`, `Stop`만 등록합니다
+— 재개 요약이 여기서는 돌지 않고, 이 설정도 효과가 없습니다.
 
 모든 대화 뒤의 루프: 자료 → 계획 + 테스트 → 구현 → 아카이브 → 회귀.
 아카이브는 무덤이 아닙니다 — 오래 쓸수록 안전망이 두꺼워집니다.
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#1e1e1e','primaryTextColor':'#fff','primaryBorderColor':'#9096a8','lineColor':'#e7e9f0','secondaryColor':'#2d2d2d','tertiaryColor':'#1e1e1e','background':'#171922','edgeLabelBackground':'#171922'}}}%%
+flowchart LR
+  Raw["scv/raw/<br>자료"]
+  Promote["계획 + 테스트<br>(scv/promote/)"]
+  Work["구현<br>+ 테스트 실행"]
+  Archive["scv/archive/"]
+  Regression["회귀<br>(아카이브된 테스트 전부)"]
+
+  Raw -->|"대화"| Promote
+  Promote --> Work
+  Work -->|"테스트 통과 + 승인"| Archive
+  Archive --> Regression
+  Regression -.->|"다음 변경의 안전망"| Promote
+
+  classDef key fill:#FFE082,stroke:#F57C00,stroke-width:2px,color:#000
+  class Promote,Regression key
+```
 
 ## 얻는 것
 
@@ -93,6 +121,8 @@ SCV는 매 턴 이런 일도 합니다:
 | `SCV_ALWAYS_ON` | `on` | 일반 대화에도 SCV; `off` = 명시적 스킬만 |
 | `SCV_PLAIN_LANGUAGE` | `on` | 쉬운말 우선; `off`로 끔 |
 | `SCV_MODEL_PROMPTING` | `on` | 모델별 프롬프팅: 모델의 가이드를 읽고 매 요청을 비교 · 등록 |
+| `SCV_SHOW_REAL` | `on` | 결과물이 바뀌면 가장 작은 것을 실제로 돌려 결과를 보임; `off`면 끔 |
+| `SCV_RESUME_RECAP` | `on` | Codex에서는 효과 없음 (세션 시작 훅이 없음) |
 | `SCV_LANG` | 자동 | `english` · `korean` · `japanese` |
 | `NOTIFIER_PROVIDER` | 꺼짐 | `slack` 또는 `discord` |
 
@@ -162,6 +192,31 @@ OpenAI 공식 가이드 원문 그대로 있고, 요구 항목의 인용이 원�
 락이 원본·아티팩트 해시를 기록합니다. 싱크 봇이 `chore/core-*` PR로 핀 갱신을
 제안하며, 릴리스는 `develop → stage → main`을 `gh workflow run promote.yml`로
 걷습니다 — [docs/RELEASING.md](docs/RELEASING.md).
+
+조각들이 맞물리는 모양 — Core는 호스트마다의 플러그인에 벤더링되고, 채널이 설치할
+빌드를 고르며, 모드는 Claude 데스크톱 앱 전용 플러그인입니다:
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#1e1e1e','primaryTextColor':'#fff','primaryBorderColor':'#9096a8','lineColor':'#e7e9f0','secondaryColor':'#2d2d2d','tertiaryColor':'#1e1e1e','background':'#171922','edgeLabelBackground':'#171922'}}}%%
+flowchart TB
+  Core["SCV Core<br>(scv-core)"]
+  Claude["Claude Code 플러그인<br>(scv-claude-code)"]
+  Codex["Codex 플러그인<br>(scv-codex)"]
+  Core -->|"벤더링, 버전 고정"| Claude
+  Core -->|"벤더링, 버전 고정"| Codex
+  subgraph Channels["릴리스 채널 — $scv:channel 로 바꿔 끼움"]
+    Dev["dev<br>브랜치 channel/dev<br>래퍼 develop + Core develop"]
+    Stage["stage<br>브랜치 channel/stage<br>래퍼 stage + Core stage"]
+    Prod["prod<br>최신 릴리스 (기본)"]
+  end
+  Codex --> Channels
+  Channels -->|"한 번에 채널 하나만 설치"| You["내 Codex"]
+  Mods["SCV 모드 마켓플레이스 (scv-mods)<br>예: scv-dashboard — SCV 패널"]
+  Mods -.->|"Claude 데스크톱 앱 전용"| Claude
+
+  classDef key fill:#FFE082,stroke:#F57C00,stroke-width:2px,color:#000
+  class Core,Codex key
+```
 
 ## 출처와 라이선스
 
