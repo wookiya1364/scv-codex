@@ -68,11 +68,41 @@ Every turn, SCV also:
 - **prompts your model the way its vendor recommends** — SCV ships OpenAI's
   official prompting guides for the GPT and Codex models, compares each
   request with the running model's checklist item by item, and quotes the
-  rewritten request right after the conclusion (`SCV_MODEL_PROMPTING`).
+  rewritten request right after the conclusion (`SCV_MODEL_PROMPTING`);
+- **shows the real thing** — when a turn changes the deliverable, at the first
+  moment it runs SCV runs the smallest real thing, shows its actual output
+  (command output, screen, function result), and asks once whether to continue
+  or fix; when nothing changes it writes "no change to the deliverable" and asks
+  nothing (`SCV_SHOW_REAL`).
+
+Not on Codex: **resume recap** (`SCV_RESUME_RECAP`). On Claude Code a
+session-start hook re-injects active plans and recent decisions after `/clear`,
+compaction, or a resume. Codex has no session-start hook — this plugin
+registers only `PreToolUse`, `UserPromptSubmit`, and `Stop` — so the recap does
+not run here and the setting has no effect.
 
 The loop behind every conversation: materials → plan + tests → implement →
 archive → regression. The archive is not a graveyard — the longer the team
 uses SCV, the thicker the safety net.
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#1e1e1e','primaryTextColor':'#fff','primaryBorderColor':'#9096a8','lineColor':'#e7e9f0','secondaryColor':'#2d2d2d','tertiaryColor':'#1e1e1e','background':'#171922','edgeLabelBackground':'#171922'}}}%%
+flowchart LR
+  Raw["scv/raw/<br>materials"]
+  Promote["plan + tests<br>(scv/promote/)"]
+  Work["implement<br>+ run tests"]
+  Archive["scv/archive/"]
+  Regression["regression<br>(every archived test)"]
+
+  Raw -->|"conversation"| Promote
+  Promote --> Work
+  Work -->|"tests pass + approval"| Archive
+  Archive --> Regression
+  Regression -.->|"safety net for the next change"| Promote
+
+  classDef key fill:#FFE082,stroke:#F57C00,stroke-width:2px,color:#000
+  class Promote,Regression key
+```
 
 ## What you get
 
@@ -97,6 +127,8 @@ Secrets go to a separate git-ignored file. `.env` is never read or written.
 | `SCV_ALWAYS_ON` | `on` | SCV joins free conversation; `off` = explicit skills only |
 | `SCV_PLAIN_LANGUAGE` | `on` | plain-first answers; `off` silences |
 | `SCV_MODEL_PROMPTING` | `on` | per-model prompting: read the model's guide, compare and register every request |
+| `SCV_SHOW_REAL` | `on` | run the smallest real thing and show its output when the deliverable changes; `off` silences |
+| `SCV_RESUME_RECAP` | `on` | no effect on Codex (no session-start hook) |
 | `SCV_LANG` | auto | `english` · `korean` · `japanese` |
 | `NOTIFIER_PROVIDER` | off | `slack` or `discord` |
 
@@ -167,6 +199,31 @@ independently; the core lock records source and artifact hashes. A sync bot
 proposes pin updates as `chore/core-*` PRs; releases walk
 `develop → stage → main` via `gh workflow run promote.yml` — see
 [docs/RELEASING.md](docs/RELEASING.md).
+
+How the pieces fit — Core is vendored into each host's plugin, the channel
+picks which build you install, and mods are Claude desktop-app plugins only:
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#1e1e1e','primaryTextColor':'#fff','primaryBorderColor':'#9096a8','lineColor':'#e7e9f0','secondaryColor':'#2d2d2d','tertiaryColor':'#1e1e1e','background':'#171922','edgeLabelBackground':'#171922'}}}%%
+flowchart TB
+  Core["SCV Core<br>(scv-core)"]
+  Claude["Claude Code plugin<br>(scv-claude-code)"]
+  Codex["Codex plugin<br>(scv-codex)"]
+  Core -->|"vendored, version-pinned"| Claude
+  Core -->|"vendored, version-pinned"| Codex
+  subgraph Channels["release channels — $scv:channel swaps them"]
+    Dev["dev<br>branch channel/dev<br>wrapper develop + Core develop"]
+    Stage["stage<br>branch channel/stage<br>wrapper stage + Core stage"]
+    Prod["prod<br>latest release (default)"]
+  end
+  Codex --> Channels
+  Channels -->|"one channel installed at a time"| You["your Codex"]
+  Mods["SCV mods marketplace (scv-mods)<br>e.g. scv-dashboard — the SCV pane"]
+  Mods -.->|"Claude desktop app only"| Claude
+
+  classDef key fill:#FFE082,stroke:#F57C00,stroke-width:2px,color:#000
+  class Core,Codex key
+```
 
 ## Origin and license
 
