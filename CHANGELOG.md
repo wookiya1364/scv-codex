@@ -2,6 +2,14 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.72.0-codex.1] — 2026-10-28
+
+### Core 0.72.0 동기화 — 개인정보 검사 · 훅 속도
+
+- 병합 전 개인정보 검사(`check-privacy.sh`)를 branch-flow 에 단계로 넣었다.
+- 매 턴 훅이 설정을 한 번에 읽어 빨라졌다(빈 저장소 7.3 → 1.8초).
+- 코어 시험을 `run-focused.sh` 로 돌린다(plugin-ci · core-sync) — 실패한 시험의 로그 전문, 속도 검사는 끝에 혼자.
+
 ## [0.71.0-codex.1] — 2026-10-26
 
 ### Core 0.71.0 동기화 — `$scv:channel`
