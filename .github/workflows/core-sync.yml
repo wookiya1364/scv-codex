@@ -112,9 +112,7 @@ jobs:
           cp -R -p \
             plugins/scv/vendor/scv-core/core \
             "$isolated_root/core"
-          for test_script in "$isolated_root"/core/tests/test-*.sh; do
-            bash "$test_script"
-          done
+          (cd "$isolated_root" && bash core/tests/run-focused.sh --dir core/tests)
           while IFS= read -r -d '' script; do
             bash -n "$script"
           done < <(
