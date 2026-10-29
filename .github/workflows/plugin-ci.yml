@@ -119,11 +119,8 @@ jobs:
           cp -R -p \
             plugins/scv/vendor/scv-core/core \
             "$isolated_root/core"
-          for test_script in "$isolated_root"/core/tests/test-*.sh; do
-            echo "::group::$test_script"
-            bash "$test_script"
-            echo "::endgroup::"
-          done
+          # run-focused: 실패한 시험의 로그 전문을 찍고, 속도 검사는 끝에 혼자 돈다
+          (cd "$isolated_root" && bash core/tests/run-focused.sh --dir core/tests)
           python3 tools/validate-core-tree.py \
             --root plugins/scv/vendor/scv-core
           bash tools/verify-core.sh
