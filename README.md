@@ -106,17 +106,17 @@ flowchart LR
 
 ## What you get
 
-| Team problem | SCV's answer |
-|---|---|
-| An AI diff you must run yourself before trusting | Tests run as the gate; e2e evidence attaches to the PR/MR, tracked by the actual run |
-| One change described differently in ticket · PR · chat | `PLAN.md` is the single source; tickets linked via `refs:` |
-| Decisions vanish with the session | `scv/DECISIONS.md` — append-only, automatic, plus lessons |
-| Old features silently break | Every archived plan's tests re-run as one suite |
-| Plans that read as a wall of text | `$scv:deck` renders the plan's picture doc (`FEATURE_ARCHITECTURE.md`) as a numbered screen spec |
-| Not knowing what a change will touch | SCV's own graph of docs, plans, and files that change together (`SCV_GRAPH`); with Graft installed, code candidates too (`SCV_GRAFT`) |
-| "Did we already try this?" | Past-work search reads plan bodies, tests, decisions, and conversations — see [archive search](plugins/scv/vendor/scv-core/core/protocols/help/archive-search.md) |
-| The same helper rewritten in every session | A pure-function catalog: each marked function's role, kind, and examples become a catalog that work and codegen read before writing a new one; its check refuses duplicates and examples that do not run as written — any project, any language |
-| No idea whether the process works | `metrics.sh` turns the project's own records into process numbers — read-only |
+| Team problem | What SCV does | Where |
+|---|---|---|
+| You run an AI diff before trusting it | The PR arrives with a test video | `$scv:work` |
+| Ticket · PR · chat tell it differently | One plan feeds the PR and reports | `PLAN.md` |
+| Decisions vanish with the session | They land in a decision log | `scv/DECISIONS.md` |
+| Old features silently break | Past plans' tests run again | `$scv:regression` |
+| Plans read as a wall of text | One numbered picture per plan | `$scv:deck` · `FEATURE_ARCHITECTURE.md` |
+| Unclear what a change will touch | Shows files that change together | `SCV_GRAPH` · `SCV_GRAFT` |
+| "Did we already try this?" | Searches past plans and talks | [archive search](plugins/scv/vendor/scv-core/core/protocols/help/archive-search.md) |
+| The same helper gets rewritten | Checks the function catalog first | [pure-function catalog](plugins/scv/vendor/scv-core/core/contracts/purity.md) |
+| No idea if the process works | Turns records into numbers | `metrics.sh` |
 
 ## Settings
 
