@@ -2,6 +2,13 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.73.0-codex.1] — 2026-11-01
+
+### Core 0.73.0 동기화 — 순수함수 사전 · 회귀 시험 한 번씩 동시에
+
+- Core 0.73.0: 어떤 언어든 `@pure 이름` 표식으로 그 저장소의 `scv/core/catalog/pure/` 에 순수함수 사전(`pure-catalog.sh build --project`). 다른 언어끼리 같은 입출력은 '다른 언어 짝'.
+- Core 0.73.0: 맥 기본 bash 3.2 대소문자 · `[a-z]` 범위 고침, 회귀 시험이 같은 시험을 한 번씩 동시에.
+
 ## [0.72.3-codex.1] — 2026-10-31
 
 ### Core 0.72.3 동기화 — 매 턴 훅 속도
