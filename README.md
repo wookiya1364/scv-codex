@@ -115,6 +115,7 @@ flowchart LR
 | Plans that read as a wall of text | `$scv:deck` renders the plan's picture doc (`FEATURE_ARCHITECTURE.md`) as a numbered screen spec |
 | Not knowing what a change will touch | SCV's own graph of docs, plans, and files that change together (`SCV_GRAPH`); with Graft installed, code candidates too (`SCV_GRAFT`) |
 | "Did we already try this?" | Past-work search reads plan bodies, tests, decisions, and conversations — see [archive search](plugins/scv/vendor/scv-core/core/protocols/help/archive-search.md) |
+| The same helper rewritten in every session | A pure-function catalog: each marked function's role, kind, and examples become a catalog that work and codegen read before writing a new one; its check refuses duplicates and examples that do not run as written — any project, any language |
 | No idea whether the process works | `metrics.sh` turns the project's own records into process numbers — read-only |
 
 ## Settings
