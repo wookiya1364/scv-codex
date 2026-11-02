@@ -121,11 +121,14 @@ flowchart LR
 |---|---|---|
 | `SCV_ALWAYS_ON` | `on` | 일반 대화에도 SCV; `off` = 명시적 스킬만 |
 | `SCV_PLAIN_LANGUAGE` | `on` | 쉬운말 우선; `off`로 끔 |
-| `SCV_MODEL_PROMPTING` | `on` | 모델별 프롬프팅: 모델의 가이드를 읽고 매 요청을 비교 · 등록 |
-| `SCV_SHOW_REAL` | `on` | 결과물이 바뀌면 가장 작은 것을 실제로 돌려 결과를 보임; `off`면 끔 |
+| `SCV_MODEL_PROMPTING` | `on` | 모델별 프롬프팅 (아래 참고) |
+| `SCV_SHOW_REAL` | `on` | 바뀌면 실물을 돌려 보임; `off`면 끔 |
 | `SCV_RESUME_RECAP` | `on` | Codex에서는 효과 없음 (세션 시작 훅이 없음) |
 | `SCV_LANG` | 자동 | `english` · `korean` · `japanese` |
 | `NOTIFIER_PROVIDER` | 꺼짐 | `slack` 또는 `discord` |
+
+`SCV_MODEL_PROMPTING`은 모델의 가이드를 읽고 매 요청을 비교 · 등록합니다.
+`SCV_SHOW_REAL`은 결과물이 바뀌면 가장 작은 것을 실제로 돌려 결과를 보입니다.
 
 나머지 키와 기본값:
 [`scv_settings.example.json`](plugins/scv/vendor/scv-core/core/template/scv/scv_settings.example.json).
@@ -147,15 +150,17 @@ bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # 과정 숫자
 | `$scv:work <slug>` | 구현 · 테스트 · 아카이브 · 증적 붙은 PR/MR |
 | `$scv:codegen <slug>` | TDD-first 변형 (테스트가 코드를 이끈다) |
 | `$scv:regression` | 아카이브된 모든 계획의 테스트 실행 |
-| `$scv:deck [<md>]` | 계획 → 번호식 화면설계서 (마크다운 → 기획서 문서 / 슬라이드도) |
+| `$scv:deck [<md>]` | 계획 → 화면설계서 (md → 기획서 / 슬라이드) |
 | `$scv:report` | 페이즈 결과를 Slack/Discord로 |
 | `$scv:sync` | 템플릿 갱신 + 드리프트 감지 |
 | `$scv:routine <name>` | 파일 하나짜리 유지보수 루틴 |
 | `$scv:dreams` | 지난 세션을 돌아보며 더 좋은 프롬프트 코칭 |
-| `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | SCV 모드는 Claude 데스크톱 앱 플러그인 — Codex 는 한 줄로 안내 |
-| `$scv:channel` | SCV 를 개발 · 스테이징 · 운영 채널로 바꿔 끼우기 — 릴리스 전에 새 작업 확인 |
+| `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | 데스크톱 앱 전용 플러그인 — Codex 는 한 줄 안내 |
+| `$scv:channel` | 개발 · 스테이징 · 운영 전환 — 릴리스 전 새 작업 확인 |
 | `$scv:workspace` · `$scv:handoff` | 멀티레포 우산 · 타 저장소 작업 선언 |
 | `$scv:update` · `$scv:set-models` · `$scv:install-deps` | 업데이트 안내 · 모델 정책 진단 · CLI 의존성 |
+
+`$scv:deck`은 번호식 화면설계서를 씁니다. SCV 모드는 Claude 데스크톱 앱 플러그인입니다.
 
 `$scv:set-models`는 이 호스트에서 읽기 전용입니다: Codex 스킬은 스킬별 모델
 고정이 안 되므로, 과거 정책의 의도를 진단만 하고 `.codex/config.toml` 수정은
@@ -185,14 +190,17 @@ Codex 훅은 핫리로드가 안 됩니다: 플러그인 업데이트 후 Codex�
 
 ## 공유 코어와 릴리스
 
-동작은 [scv-core](https://github.com/wookiya1364/scv-core)에 살고,
-`plugins/scv/vendor/scv-core/` 아래 체크섬과 함께 벤더링됩니다 — 런타임에
-아무것도 내려받지 않습니다. 프롬프팅 가이드는 `plugins/scv/prompting/` 아래
-OpenAI 공식 가이드 원문 그대로 있고, 요구 항목의 인용이 원문에 글자 그대로
-있는지 CI가 검사합니다. 래퍼·코어·템플릿 버전은 독립적으로 움직이고, 코어
-락이 원본·아티팩트 해시를 기록합니다. 싱크 봇이 `chore/core-*` PR로 핀 갱신을
-제안하며, 릴리스는 `develop → stage → main`을 `gh workflow run promote.yml`로
-걷습니다 — [docs/RELEASING.md](docs/RELEASING.md).
+동작은 [scv-core](https://github.com/wookiya1364/scv-core)에 삽니다:
+
+- `plugins/scv/vendor/scv-core/` 아래 체크섬과 함께 벤더링됩니다 — 런타임에
+  아무것도 내려받지 않습니다.
+- 프롬프팅 가이드는 `plugins/scv/prompting/` 아래 OpenAI 공식 가이드 원문
+  그대로 있고, 요구 항목의 인용이 원문에 글자 그대로 있는지 CI가 검사합니다.
+- 래퍼·코어·템플릿 버전은 독립적으로 움직이고, 코어 락이 원본·아티팩트
+  해시를 기록합니다.
+- 싱크 봇이 `chore/core-*` PR로 핀 갱신을 제안합니다.
+- 릴리스는 `develop → stage → main`을 `gh workflow run promote.yml`로
+  걷습니다 — [docs/RELEASING.md](docs/RELEASING.md).
 
 조각들이 맞물리는 모양 — Core는 호스트마다의 플러그인에 벤더링되고, 채널이 설치할
 빌드를 고르며, 모드는 Claude 데스크톱 앱 전용 플러그인입니다:
