@@ -127,11 +127,14 @@ Secrets go to a separate git-ignored file. `.env` is never read or written.
 |---|---|---|
 | `SCV_ALWAYS_ON` | `on` | SCV joins free conversation; `off` = explicit skills only |
 | `SCV_PLAIN_LANGUAGE` | `on` | plain-first answers; `off` silences |
-| `SCV_MODEL_PROMPTING` | `on` | per-model prompting: read the model's guide, compare and register every request |
-| `SCV_SHOW_REAL` | `on` | run the smallest real thing and show its output when the deliverable changes; `off` silences |
+| `SCV_MODEL_PROMPTING` | `on` | per-model prompting (see below) |
+| `SCV_SHOW_REAL` | `on` | show a real run on change; `off` silences |
 | `SCV_RESUME_RECAP` | `on` | no effect on Codex (no session-start hook) |
 | `SCV_LANG` | auto | `english` · `korean` · `japanese` |
 | `NOTIFIER_PROVIDER` | off | `slack` or `discord` |
+
+`SCV_MODEL_PROMPTING` reads the model's guide, then compares and registers every request.
+`SCV_SHOW_REAL` runs the smallest real thing and shows its output when the deliverable changes.
 
 Every other key and its default:
 [`scv_settings.example.json`](plugins/scv/vendor/scv-core/core/template/scv/scv_settings.example.json).
@@ -153,15 +156,17 @@ Conversation routes for you; the explicit selectors:
 | `$scv:work <slug>` | Implement · test · archive · PR/MR with evidence |
 | `$scv:codegen <slug>` | TDD-first variant (tests drive the code) |
 | `$scv:regression` | Run every archived plan's tests |
-| `$scv:deck [<md>]` | Plan → numbered screen spec (or markdown → planning document / slides) |
+| `$scv:deck [<md>]` | Plan → screen spec (md → planning doc / slides) |
 | `$scv:report` | Phase result to Slack/Discord |
 | `$scv:sync` | Refresh templates + drift detection |
 | `$scv:routine <name>` | One-file maintenance routines |
 | `$scv:dreams` | Look back at past sessions · coach better prompts |
-| `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | SCV mods are Claude desktop-app plugins — Codex says so in one line |
-| `$scv:channel` | Switch SCV between dev · stage · prod — try new work before a release |
+| `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | Desktop-app plugins only — Codex says so in one line |
+| `$scv:channel` | Swap dev · stage · prod — try new work before a release |
 | `$scv:workspace` · `$scv:handoff` | Multi-repo umbrella · cross-repo declaration |
 | `$scv:update` · `$scv:set-models` · `$scv:install-deps` | Update guide · model-policy diagnostic · CLI deps |
+
+`$scv:deck` writes a numbered screen spec. SCV mods are Claude desktop-app plugins.
 
 `$scv:set-models` is read-only on this host: Codex skills cannot pin per-skill
 models, so it diagnoses legacy policy intent and only edits
@@ -191,15 +196,18 @@ target a module by leading argument: `$scv:status FE`.
 
 ## Shared core and releases
 
-Behavior lives in [scv-core](https://github.com/wookiya1364/scv-core),
-vendored checksummed under `plugins/scv/vendor/scv-core/` — nothing fetched at
-runtime. The prompting guides live under `plugins/scv/prompting/` as verbatim
-copies of OpenAI's official guides; CI checks that every checklist quote
-appears in them word for word. Wrapper, core, and template versions move
-independently; the core lock records source and artifact hashes. A sync bot
-proposes pin updates as `chore/core-*` PRs; releases walk
-`develop → stage → main` via `gh workflow run promote.yml` — see
-[docs/RELEASING.md](docs/RELEASING.md).
+Behavior lives in [scv-core](https://github.com/wookiya1364/scv-core):
+
+- Vendored checksummed under `plugins/scv/vendor/scv-core/` — nothing fetched
+  at runtime.
+- The prompting guides live under `plugins/scv/prompting/` as verbatim copies
+  of OpenAI's official guides; CI checks that every checklist quote appears in
+  them word for word.
+- Wrapper, core, and template versions move independently; the core lock
+  records source and artifact hashes.
+- A sync bot proposes pin updates as `chore/core-*` PRs.
+- Releases walk `develop → stage → main` via `gh workflow run promote.yml` —
+  see [docs/RELEASING.md](docs/RELEASING.md).
 
 How the pieces fit — Core is vendored into each host's plugin, the channel
 picks which build you install, and mods are Claude desktop-app plugins only:

@@ -124,11 +124,14 @@ flowchart LR
 |---|---|---|
 | `SCV_ALWAYS_ON` | `on` | 自由会話にも SCV; `off` = 明示的スキルのみ |
 | `SCV_PLAIN_LANGUAGE` | `on` | やさしい言葉優先; `off` で停止 |
-| `SCV_MODEL_PROMPTING` | `on` | モデル別プロンプティング: モデルのガイドを読み、毎回の依頼を照合 · 登録 |
-| `SCV_SHOW_REAL` | `on` | 成果物が変わると最小のものを実際に動かして結果を見せる; `off` で止める |
+| `SCV_MODEL_PROMPTING` | `on` | モデル別プロンプティング (下記参照) |
+| `SCV_SHOW_REAL` | `on` | 変更時に実物を動かして見せる; `off` で止める |
 | `SCV_RESUME_RECAP` | `on` | Codex では効果なし (セッション開始フックがない) |
 | `SCV_LANG` | 自動 | `english` · `korean` · `japanese` |
 | `NOTIFIER_PROVIDER` | オフ | `slack` か `discord` |
+
+`SCV_MODEL_PROMPTING` はモデルのガイドを読み、毎回の依頼を照合 · 登録します。
+`SCV_SHOW_REAL` は成果物が変わると最小のものを実際に動かして結果を見せます。
 
 その他のキーと既定値:
 [`scv_settings.example.json`](plugins/scv/vendor/scv-core/core/template/scv/scv_settings.example.json)。
@@ -150,15 +153,17 @@ bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # プロセスの�
 | `$scv:work <slug>` | 実装 · テスト · アーカイブ · 証跡つき PR/MR |
 | `$scv:codegen <slug>` | TDD-first 変種 (テストがコードを導く) |
 | `$scv:regression` | アーカイブされた全計画のテストを実行 |
-| `$scv:deck [<md>]` | 計画 → 番号付き画面設計書 (Markdown → 企画書ドキュメント / スライドも) |
+| `$scv:deck [<md>]` | 計画 → 画面設計書 (md → 企画書 / スライド) |
 | `$scv:report` | フェーズ結果を Slack/Discord へ |
 | `$scv:sync` | テンプレート更新 + ドリフト検知 |
 | `$scv:routine <name>` | 1 ファイルのメンテナンスルーチン |
 | `$scv:dreams` | 過去のセッションを振り返り、より良いプロンプトを助言 |
-| `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | SCV モッドは Claude デスクトップアプリのプラグイン — Codex は一行で案内 |
-| `$scv:channel` | SCV を開発 · ステージング · 本番チャネルに切り替え — リリース前に新しい作業を確認 |
+| `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | デスクトップアプリ専用プラグイン — Codex は一行で案内 |
+| `$scv:channel` | 開発 · ステージング · 本番を切替 — リリース前に新作業を確認 |
 | `$scv:workspace` · `$scv:handoff` | マルチレポのアンブレラ · 他リポジトリ作業の宣言 |
 | `$scv:update` · `$scv:set-models` · `$scv:install-deps` | 更新案内 · モデルポリシー診断 · CLI 依存 |
+
+`$scv:deck` は番号付き画面設計書を書きます。SCV モッドは Claude デスクトップアプリのプラグインです。
 
 `$scv:set-models` はこのホストでは読み取り専用です: Codex スキルはスキル別の
 モデル固定ができないため、旧ポリシーの意図を診断するのみで、
@@ -189,14 +194,17 @@ Codex のフックはホットリロードされません: プラグイン更新
 
 ## 共有コアとリリース
 
-動作は [scv-core](https://github.com/wookiya1364/scv-core) にあり、
-`plugins/scv/vendor/scv-core/` 配下にチェックサムつきでベンダリングされます —
-実行時に何も取得しません。プロンプティングガイドは `plugins/scv/prompting/`
-以下に OpenAI 公式ガイドの原文そのままで置かれ、要求項目の引用が原文に一字一句
-あるかを CI が検査します。ラッパー・コア・テンプレートのバージョンは独立に
-動き、コアロックが原本・アーティファクトのハッシュを記録します。同期ボットが
-`chore/core-*` PR でピン更新を提案し、リリースは `develop → stage → main` を
-`gh workflow run promote.yml` で歩きます — [docs/RELEASING.md](docs/RELEASING.md)。
+動作は [scv-core](https://github.com/wookiya1364/scv-core) にあります:
+
+- `plugins/scv/vendor/scv-core/` 配下にチェックサムつきでベンダリングされます —
+  実行時に何も取得しません。
+- プロンプティングガイドは `plugins/scv/prompting/` 以下に OpenAI 公式ガイドの
+  原文そのままで置かれ、要求項目の引用が原文に一字一句あるかを CI が検査します。
+- ラッパー・コア・テンプレートのバージョンは独立に動き、コアロックが原本・
+  アーティファクトのハッシュを記録します。
+- 同期ボットが `chore/core-*` PR でピン更新を提案します。
+- リリースは `develop → stage → main` を `gh workflow run promote.yml` で
+  歩きます — [docs/RELEASING.md](docs/RELEASING.md)。
 
 部品のつながり — Core はホストごとのプラグインにベンダリングされ、チャンネルが
 インストールするビルドを選び、モッドは Claude デスクトップアプリ専用のプラグインです:
