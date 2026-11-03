@@ -9,7 +9,7 @@ installed `SKILL.md` files.
 
 ## Language
 
-Use project `.env` `SCV_LANG`, then the user's latest message language, then
+Use `scv/scv_settings.json` `SCV_LANG`, then the user's latest message language, then
 English. Keep model identifiers and config keys unchanged.
 
 ## Protocol
