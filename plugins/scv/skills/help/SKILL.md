@@ -11,4 +11,6 @@ description: "Diagnose an SCV-enabled repository, hydrate SCV when requested, se
 4. If the user approves hydration, invoke
    `../../adapter/scripts/hydrate.sh`; do not call the core hydrate helper
    directly.
-5. Lead with the diagnosed state and one recommended next action.
+5. Shape the answer as the help protocol says for the mode it picked — diagnosis
+   leads with the state and one next action; conversation and archive search
+   follow their own answer shape.

@@ -52,8 +52,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$FROM_ENV" == "1" ]]; then
+  # The setting lives in scv/scv_settings.json since core 0.34.0; the root .env is read only
+  # when the settings file does not carry it (projects not yet migrated).
+  SETTINGS_FILE="$PROJECT_DIR/scv/scv_settings.json"
   ENV_FILE="$PROJECT_DIR/.env"
-  if [[ ! -f "$ENV_FILE" ]]; then
+  POLICY=""
+  if [[ -f "$SETTINGS_FILE" && ! -L "$SETTINGS_FILE" ]] && command -v jq >/dev/null 2>&1; then
+    POLICY="$(jq -r 'try (.SCV_MODEL_POLICY // empty) | strings' "$SETTINGS_FILE" 2>/dev/null | tr -d '[:space:]' || true)"
+  fi
+  if [[ -n "$POLICY" ]]; then
+    :
+  elif [[ ! -f "$ENV_FILE" ]]; then
     POLICY="session-default"
   else
     POLICY="$(

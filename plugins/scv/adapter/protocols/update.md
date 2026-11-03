@@ -5,7 +5,7 @@ and guide a marketplace refresh. This workflow is read-only.
 
 ## Language
 
-Use project `.env` `SCV_LANG`, then the user's latest message language, then
+Use `scv/scv_settings.json` `SCV_LANG`, then the user's latest message language, then
 English. Keep command names, versions, and paths unchanged.
 
 ## Protocol
