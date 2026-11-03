@@ -119,6 +119,19 @@ assert_output "direct session-default" "$output" "POLICY: session-default"
 assert_output "direct session-default" "$output" "SUPPORTED: yes"
 assert_output "direct session-default" "$output" "CHANGED_FILES: 0"
 
+# The setting is read from scv/scv_settings.json first; the root .env only when the settings file lacks it.
+project="$WORK/settings-policy"
+mkdir -p "$project/scv"
+printf '{ "SCV_MODEL_POLICY": "all-sonnet" }\n' >"$project/scv/scv_settings.json"
+printf 'SCV_MODEL_POLICY=all-opus\n' >"$project/.env"
+output="$(SCV_PROJECT_DIR="$project" bash "$SCRIPT" --from-env 2>&1)"
+rc=$?
+assert_rc "settings file wins" "$rc" 0
+assert_output "settings file wins" "$output" "POLICY: all-sonnet"
+printf '{ "SCV_LANG": "korean" }\n' >"$project/scv/scv_settings.json"
+output="$(SCV_PROJECT_DIR="$project" bash "$SCRIPT" --from-env 2>&1)"
+assert_output "env fallback when settings lack the key" "$output" "POLICY: all-opus"
+
 # Unknown policies still fail validation.
 project="$WORK/invalid-policy"
 mkdir -p "$project"

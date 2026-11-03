@@ -9,7 +9,7 @@ installed `SKILL.md` files.
 
 ## Language
 
-Use project `.env` `SCV_LANG`, then the user's latest message language, then
+Use `scv/scv_settings.json` `SCV_LANG`, then the user's latest message language, then
 English. Keep model identifiers and config keys unchanged.
 
 ## Protocol
@@ -24,8 +24,8 @@ Accept at most one legacy SCV policy:
 - `all-haiku`
 - `session-default`
 
-When no argument is supplied, inspect `SCV_MODEL_POLICY` in the project `.env`
-without sourcing the file:
+When no argument is supplied, inspect `SCV_MODEL_POLICY` in `scv/scv_settings.json`
+(the root `.env` only for projects not yet migrated) without sourcing either file:
 
 ```bash
 bash "${SCV_PLUGIN_ROOT}/adapter/scripts/apply-model-policy.sh" --from-env
