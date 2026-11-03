@@ -126,7 +126,7 @@ files to emulate another host's model routing.
 
 Use this priority for user-facing prose:
 
-1. Project `.env` `SCV_LANG`.
+1. `scv/scv_settings.json` `SCV_LANG` (project settings; the root `.env` no longer holds it).
 2. The language of the user's latest message.
 3. English.
 
