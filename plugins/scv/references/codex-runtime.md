@@ -68,6 +68,11 @@ non-exempt path outside `scv/`. This host registers `gate-bash` and `gate-write`
 only — Codex has no skill-invocation event, so there is no mint entry, and a
 shell call is the only thing that can mint a receipt here.
 
+Since Core 0.80.0 both matchers also run the guard in `gate-any` mode (Rule H —
+help first): in a person's turn a shell or patch call is refused until help has
+been called. The help call itself is a shell call that runs the vendored
+`help.sh`, so it passes and marks the turn.
+
 `hooks/hooks.json` gives the hook two directories to watch — the vendored
 `$SCV_CORE_ROOT/scripts` AND `$SCV_PLUGIN_ROOT/adapter/scripts`, colon-separated
 (Core 0.28.0 taught `SCV_GUARD_SCRIPTS` to take a list) — and the hook looks for

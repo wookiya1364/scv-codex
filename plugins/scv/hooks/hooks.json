@@ -21,6 +21,26 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Bash|shell|local_shell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SCV_GUARD_MODE=gate-any SCV_GUARD_SCRIPTS=\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/scripts:${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/adapter/scripts\" SCV_GUARD_EXEMPT=\".codex/config.toml\" bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/template/hooks/guard.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "apply_patch|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SCV_GUARD_MODE=gate-any SCV_GUARD_SCRIPTS=\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/scripts:${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/adapter/scripts\" SCV_GUARD_EXEMPT=\".codex/config.toml\" bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scv-core/core/template/hooks/guard.sh\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
