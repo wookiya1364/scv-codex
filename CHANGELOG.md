@@ -2,6 +2,14 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.83.0-codex.1] — 2026-11-07
+
+### Core 0.83.0 동기화 — 종료 검사 다음 턴 안내 · 가이드 발췌본
+
+- 종료 검사가 막지 않고 어긋난 점을 다음 턴 첫 안내로 넘김(`SCV_STOP_MODE`, 기본 notice · block 이면 예전처럼).
+- 제목형 확인 범위를 빠진 줄로 보던 오탐 수정.
+- 공통 가이드 발췌본(`excerpt-prompt-engineering.md`) — `excerpt.sh` 가 원문에서 뽑고 `check.sh` 가 확인.
+
 ## [0.82.2-codex.1] — 2026-11-05
 
 ### Core 0.82.2 동기화 — 끝 보고 확인 범위 (0.82.0 기능 포함, 0.82.1-codex.1 은 공개 못 함)
