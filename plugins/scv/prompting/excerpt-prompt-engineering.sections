@@ -1,0 +1,5 @@
+# 요구 항목(checklist-prompt-engineering.tsv) 인용이 든 구역 — 원문의 제목 줄 그대로. 바꾸면 bash plugins/scv/prompting/excerpt.sh
+## Prompting reasoning models
+## Message formatting with Markdown and XML
+### Prompting best practices for the latest model
+## Few-shot learning
