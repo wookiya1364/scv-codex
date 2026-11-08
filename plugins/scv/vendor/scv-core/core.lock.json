@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "core_version": "0.85.0",
+  "core_version": "0.85.1",
   "core_api": 1,
   "template_version": "2.3.0",
   "source_repository": "https://github.com/wookiya1364/scv-core",
-  "source_commit": "580ab5b6a3028b3eacfe3c6024b0055257f6a67b",
-  "source_manifest_sha256": "b0ce2bbede79d759ab5d203b3fdf78a1bf5d721dc1688d853975b99a135fc99f",
-  "source_payload_sha256": "b482c4fdf24beee871cbad741b345fe2d6f1d81a34fadf415f31f14f5d2dfcfa",
-  "manifest_sha256": "775fdffa7380c3eede3b6be2e694f2478ead5295cba6651f11271c5338b7f0a9",
-  "payload_sha256": "72fd7d698053341b54639e874fbe1ae2868d0751ea456a447f7bdfdd35f65f8c",
-  "artifact_sha256": "93850d2bdcf31100cddd0bcc59f96c88a39460468e7685e5611e56f8dc74fdd4",
-  "vendored_at": "2026-11-08T13:32:48+09:00"
+  "source_commit": "872fd2ec9668980e099ec25db25e555034005535",
+  "source_manifest_sha256": "dc93ef647a6cd1c70ce7d9738c2946e0b647080df686e8554cb158093606cb00",
+  "source_payload_sha256": "c4c7fa3189befa2ba0a3b3c7b6d2fb763acf798e4df738bc9eb3f29e34ae8c92",
+  "manifest_sha256": "f75769793f47a7f67f5976118cb03d1de1518a7fd08a8636b389957e187bb1bb",
+  "payload_sha256": "e35b5daeabaec2bd48bc15da1857f286010ed9f190f8443e4f88154c0394c451",
+  "artifact_sha256": "1b0861a8e5e11868beb81c6157ec0bf7038854348ced6917d1b9a6bce19032f2",
+  "vendored_at": "2026-11-08T16:21:11+09:00"
 }
