@@ -510,9 +510,14 @@ else
   RELEASE_BASE="$REPOSITORY/releases/download/$RELEASE_TAG"
 
   echo "Downloading $RELEASE_BASE/$ARCHIVE_NAME"
+  # 릴리스가 공개된 뒤 파일이 붙기까지 15~25분 걸린다(2026-11 관측) — 그 사이 404 · 504 가 난다.
+  # 모든 오류를 1분 간격으로 다시 시도하고, 최대 SCV_SYNC_WAIT_SECONDS(기본 2700초 = 45분)까지 기다린다.
+  _wait="${SCV_SYNC_WAIT_SECONDS:-2700}"
   curl --fail --location --silent --show-error \
+    --retry 60 --retry-delay 60 --retry-all-errors --retry-max-time "$_wait" \
     "$RELEASE_BASE/$ARCHIVE_NAME" --output "$ARCHIVE"
   curl --fail --location --silent --show-error \
+    --retry 60 --retry-delay 60 --retry-all-errors --retry-max-time "$_wait" \
     "$RELEASE_BASE/$ARCHIVE_NAME.sha256" --output "$CHECKSUM"
 
   EXPECTED_SHA="$(
