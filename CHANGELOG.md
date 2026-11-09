@@ -2,6 +2,12 @@
 
 이 저장소의 변경사항을 기록합니다. [Semantic Versioning](https://semver.org/lang/ko/) 규칙을 따릅니다.
 
+## [0.87.2-codex.1] — 2026-11-09
+
+### Core 0.87.2 동기화 — 고친 턴은 계획 기록이 있어야 끝남
+
+- 파일을 바꾼 턴은 plan-link 기록(progress · append · pause · exempt)이 있어야 끝남. 기록 줄에 요청 원문. Non-Goals 겹침이면 멈춤, 되돌아가지 않은 보류는 막음. 끄기: SCV_TURN_PLAN_CHECK=off.
+
 ## [0.86.0-codex.1] — 2026-11-09
 
 ### Core 0.86.0 동기화 — 계획 밖 요구를 계획 파일에 남김
