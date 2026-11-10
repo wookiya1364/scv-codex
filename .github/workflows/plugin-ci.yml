@@ -92,7 +92,7 @@ jobs:
           bash plugins/scv/tests/test-vendor-core.sh
           bash plugins/scv/tests/test-vendor-core-atomicity.sh
 
-      - name: Check prompting guides and checklist quotes
+      - name: Check prompting guides
         run: bash plugins/scv/prompting/check.sh
 
       # Core 0.63.0+: the README check ships in the vendored Core. It reads the root README set and the
