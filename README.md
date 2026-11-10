@@ -66,9 +66,9 @@ Every turn, SCV also:
 - **answers in plain language** — a one- or two-sentence conclusion first,
   then one example, code values only when you ask (`SCV_PLAIN_LANGUAGE`);
 - **prompts your model the way its vendor recommends** — SCV ships OpenAI's
-  official prompting guides for the GPT and Codex models, compares each
-  request with the running model's checklist item by item, and quotes the
-  rewritten request right after the conclusion (`SCV_MODEL_PROMPTING`);
+  official prompting guides for the GPT and Codex models, rewrites each
+  request the way the running model's guide says, and quotes the
+  rewritten request at the top of the answer (`SCV_MODEL_PROMPTING`);
 - **shows the real thing** — when a turn changes the deliverable, at the first
   moment it runs SCV runs the smallest real thing, shows its actual output
   (command output, screen, function result), and asks once whether to continue
@@ -201,8 +201,8 @@ Behavior lives in [scv-core](https://github.com/wookiya1364/scv-core):
 - Vendored checksummed under `plugins/scv/vendor/scv-core/` — nothing fetched
   at runtime.
 - The prompting guides live under `plugins/scv/prompting/` as verbatim copies
-  of OpenAI's official guides; CI checks that every checklist quote appears in
-  them word for word.
+  of OpenAI's official guides; CI checks that each copy carries its source,
+  date and copyright lines.
 - Wrapper, core, and template versions move independently; the core lock
   records source and artifact hashes.
 - A sync bot proposes pin updates as `chore/core-*` PRs.
