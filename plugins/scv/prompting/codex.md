@@ -1,6 +1,6 @@
 <!--
 Source: https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide.md
-Fetched: 2026-09-27
+Fetched: 2026-11-11
 Copyright: OpenAI. Verbatim copy of the official documentation, kept offline for SCV help. Do not edit; run plugins/scv/prompting/refresh.sh to update.
 -->
 

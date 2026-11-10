@@ -1,6 +1,6 @@
 <!--
 Source: https://developers.openai.com/api/docs/guides/prompt-engineering.md
-Fetched: 2026-09-27
+Fetched: 2026-11-11
 Copyright: OpenAI. Verbatim copy of the official documentation, kept offline for SCV help. Do not edit; run plugins/scv/prompting/refresh.sh to update.
 Excerpt: only the sections named in the excerpt list, each copied verbatim from this source.
 -->
@@ -207,7 +207,7 @@ Few-shot learning lets you steer a large language model toward a new task by inc
 
 Typically, you will provide examples as part of a `developer` message in your API request. Here's an example `developer` message containing examples that show a model how to classify positive or negative customer service reviews.
 
-```
+```text
 # Identity
 
 You are a helpful assistant that labels short product reviews as
@@ -246,6 +246,7 @@ Terrible customer service, I'll never buy from them again.
 Negative
 </assistant_response>
 ```
+
 
 ### Prompting best practices for the latest model
 
@@ -307,6 +308,7 @@ Step 3: Apply the rubric to iterate on the optimal solution to the given prompt.
 Step 4: Aim for simplicity while fully achieving the goal, and avoid external dependencies such as Next.js or React.
 ```
 
+
 **Integration with large codebases**
 
 For front-end engineering work in larger codebases, we've found that adding these categories of instruction to your prompts delivers the best results:
@@ -335,7 +337,7 @@ For agentic and long-running rollouts with `gpt-6-astra`, focus your prompts on 
 **Planning and persistence**
 Instruct the model to resolve the full query before yielding control, decomposing it into sub-tasks and reflecting after each tool call to confirm completeness.
 
-```
+```text
 Remember, you are an agent - please keep going until the user's
 query is completely resolved, before ending your turn and yielding
 back to the user. Decompose the user's query into all required
@@ -352,13 +354,15 @@ ensuring the user's query, and related sub-requests
 are completely resolved.
 ```
 
+
 **Preambles for transparency**
 
 Ask the model to explain why it is calling a tool, but only at notable steps.
 
-```
+```text
 Before you call a tool explain why you are calling it
 ```
+
 
 **Progress tracking with rubrics and TODOs**
 
