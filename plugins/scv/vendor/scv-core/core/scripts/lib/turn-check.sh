@@ -168,6 +168,50 @@ scv_tc_req_count() {
 }
 
 # @pure
+# 역할: 요청 원문에서 첨부 파일의 경로를 지우고 그 자리에 "[첨부]"를 둔다 — 원문은 계획 기록(공개될 수 있는 글)에 붙으므로 내 컴퓨터의 경로가 남지 않게
+# 종류: 다듬기
+# 예: '@"/Users/x/uploads/s/a.png" 이 화면처럼 고쳐줘' → "[첨부] 이 화면처럼 고쳐줘"
+# 예: '둘 다 봐 @"/Users/x/a b.png" @"~/c.pdf" 끝' → "둘 다 봐 [첨부] [첨부] 끝"
+# 예: "이것 @/Users/x/shot.png 처럼" → "이것 [첨부] 처럼"
+# 예: '이름에 골뱅이 @"/Users/x/a@2x.png" 끝' → "이름에 골뱅이 [첨부] 끝"
+# 예: "전사 체력 87로 수정해" → "전사 체력 87로 수정해"
+# 예: '메일은 a@b.com, 경로 글 @"상대/경로" 는 그대로' → '메일은 a@b.com, 경로 글 @"상대/경로" 는 그대로'
+# 지우는 것은 "@" 바로 뒤에 오는 절대 경로(/ 또는 ~/ 로 시작)뿐이다 — 따옴표 꼴(@"…")은 닫는 따옴표까지,
+# 맨 꼴(@/…)은 빈칸 앞까지이고 "@" 가 글의 처음이거나 빈칸 뒤일 때만이다(메일 주소는 건드리지 않는다).
+# 글을 "@" 에서 한 번만 나눠 조각마다 본다 — 남은 글을 되풀이해 복사하면 첨부 수 × 글 길이만큼 느려진다
+# (2026-11-12 실측, 입력 4배에 10.4배 → 나눠 보기로 바꾼 뒤의 값은 계획 20261112-wookiya1364-small-fixes-bundle).
+scv_tc_strip_attach() {
+  local t="${1:-}" out="" piece prev="" tok held="" mode="" i=0 tail_at="" had_f=""
+  [[ "$t" == *@* ]] || { printf '%s' "$t"; return 0; }
+  # 바이트로 본다 — 찾는 글(@ · " · / · ~ · 빈칸)이 모두 한 바이트라 답이 같다
+  local LC_ALL="${LC_ALL-}"; LC_ALL=C
+  [[ "$t" == *@ ]] && tail_at=1
+  [[ $- == *f* ]] && had_f=1
+  local IFS=@
+  set -f; set -- $t; [[ -n "$had_f" ]] || set +f
+  for piece in "$@"; do
+    if (( i == 0 )); then out="$piece"
+    elif [[ "$mode" == quoted ]]; then          # 따옴표 꼴의 경로 안 — 닫는 따옴표를 찾는다
+      if [[ "$piece" == *\"* ]]; then tok="${piece%%\"*}"; out+="[첨부]${piece:${#tok}+1}"; mode=""; held=""
+      else held+="@$piece"; fi
+    elif [[ "$mode" == bare ]]; then            # 맨 꼴의 경로 안 — 빈칸을 찾는다
+      if [[ "$piece" == *[[:space:]]* ]]; then tok="${piece%%[[:space:]]*}"; out+="${piece:${#tok}}"; mode=""; fi
+    elif [[ "$piece" == \"/* || "$piece" == \"~/* ]]; then
+      tok="${piece:1}"
+      if [[ "$tok" == *\"* ]]; then tok="${tok%%\"*}"; out+="[첨부]${piece:${#tok}+2}"
+      else mode=quoted; held="@$piece"; fi
+    elif [[ ( "$piece" == /* || "$piece" == '~/'* ) && ( ( $i == 1 && -z "$prev" ) || "$prev" == *[[:space:]] ) ]]; then
+      out+="[첨부]"
+      if [[ "$piece" == *[[:space:]]* ]]; then tok="${piece%%[[:space:]]*}"; out+="${piece:${#tok}}"; else mode=bare; fi
+    else out+="@$piece"; fi
+    prev="$piece"; i=$((i + 1))
+  done
+  [[ "$mode" == quoted ]] && out+="$held"       # 닫는 따옴표가 없었다 — 경로가 아니다, 그대로 둔다
+  [[ -n "$tail_at" ]] && out+="@"
+  printf '%s' "$out"
+}
+
+# @pure
 # 역할: 기록 줄에 붙일 요청 꼬리를 만든다 — 사용자 원문 앞부분(줄바꿈은 빈칸, 80자) + "(요청 <번호>)"
 # 종류: 변환
 # 예: "ab12cd34" "전사 체력 87로 수정해" → "요청: 전사 체력 87로 수정해 (요청 ab12cd34)"
@@ -307,6 +351,50 @@ scv_tc_choice_entry() {
   (( ${#q} > 120 )) && q="${q:0:120}…"
   (( ${#a} > 120 )) && a="${a:0:120}…"
   printf '**%s %s 선택** — 답: %s\n질문: %s' "$day" "$hm" "$a" "$q"
+}
+
+# @pure
+# 역할: 사람의 말이 왔을 때 턴 상태를 새로 시작할지 이어 갈지 가린다 — 앞 턴이 끝나지 않았을 때만 이어 간다
+# 종류: 판정
+# 예: 1 0 → "continue"
+# 예: 1 1 → "fresh"
+# 예: 0 0 → "fresh"
+# 예: 0 1 → "fresh"
+# 받는 값: 요청 번호가 있는가(1|0) · 끝 표시가 있는가(1|0). 번호가 없으면 이어 갈 턴이 없다.
+# 일하는 도중에 온 말을 새 턴으로 보면 그 앞에 남긴 계획 기록 · 영수증이 '앞 턴 것'이 되어 같은 일에 기록을
+# 한 번 더 요구했다(2026-11-12 두 번). 끝 표시는 턴 끝이 통과를 낼 때와 세션을 새로 열거나 다시 열 때 생긴다.
+scv_tc_start_mode() {
+  if [[ "${1:-0}" == 1 && "${2:-0}" != 1 ]]; then printf 'continue'; else printf 'fresh'; fi
+}
+
+# @pure
+# 역할: 이어 가는 턴의 요청 글 — 지금 요청 글 뒤에 도중에 온 말을 덧붙이고 글자 수 한도에서 자른다
+# 종류: 조립
+# 예: "앞 말" "새 말" 4000 → $'앞 말\n(도중에 온 말) 새 말'
+# 예: "" "새 말" 4000 → "새 말"
+# 예: "앞 말" "" 4000 → "앞 말"
+# 예: "abc" "def" 3 → "abc"
+# 요청 번호는 처음 것 그대로라, 계획 줄에 붙는 "요청: …" 글은 처음 말로 시작한다.
+scv_tc_req_join() {
+  local cur="${1:-}" add="${2:-}" max="${3:-4000}" out
+  if [[ -z "$cur" ]]; then out="$add"
+  elif [[ -z "$add" ]]; then out="$cur"
+  else out="$cur"$'\n'"(도중에 온 말) $add"; fi
+  printf '%s' "${out:0:max}"
+}
+
+# @pure
+# 역할: 세션 열기의 종류가 앞 턴을 끝난 것으로 만드는지 가린다 — 새로 열기 · 다시 열기만 그렇다
+# 종류: 판정
+# 예: "startup" → "1"
+# 예: "resume" → "1"
+# 예: "compact" → "0"
+# 예: "clear" → "0"
+# 예: "" → "0"
+# 압축(compact)은 턴 도중에 일어난다 — 끝난 것으로 보면 그 턴의 기록이 다시 0 이 된다.
+# 비우기(clear)는 새 세션 번호를 받아 턴 폴더가 달라지므로 표시할 것이 없다.
+scv_tc_session_closes() {
+  case "${1:-}" in startup|resume) printf '1' ;; *) printf '0' ;; esac
 }
 
 # @pure

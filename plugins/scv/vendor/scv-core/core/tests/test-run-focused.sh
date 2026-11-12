@@ -69,6 +69,29 @@ $(stamp serial)"
   [[ $rc -eq 2 ]] && ok "--jobs 0 은 거절(2)" || fail "--jobs 0 rc=$rc"
   out="$(run "$BASH_BIN" --dir "$WORK/empty-$v")"; rc=$?
   [[ $rc -ne 0 ]] && ok "없는 폴더는 실패로 끝난다" || fail "없는 폴더 rc=0"
+
+  # T14 — 시험이 남긴 배경 프로그램을 그 시험이 끝날 때 끝낸다 (계획 20261112-wookiya1364-codex-choice-speed-limit)
+  #   시험이 띄운 배경 프로그램은 시험이 끝나도 돈다. 한 러너에서 모든 시험을 돌리면 그것이 뒤에 오는 시간 시험과
+  #   CPU 를 나눠 쓴다(2026-11-12 코덱스 검사: dreams.sh --auto 넷이 남아 '선택 답 17번'이 0.8초 → 2.1초).
+  #   가짜 시험 셋이 300초짜리 프로그램을 둘씩 남긴다(하나는 바로, 하나는 한 겹 안에서). 하나는 실패하고 하나는 혼자 돈다.
+  D="$WORK/t14-$v"; P14="$WORK/t14-$v.pids"; : > "$P14"
+  leak="$(printf '( sleep 300 </dev/null >/dev/null 2>&1 & echo $! >> "%s" )\n( bash -c '\''sleep 300 & echo $! >> "$0"; wait'\'' "%s" </dev/null >/dev/null 2>&1 & )\nsleep 0.5' "$P14" "$P14")"
+  mk "$D" "a-leaky" "$leak"
+  mk "$D" "b-leaky-fails" "$leak
+exit 7"
+  mk "$D" "c-leaky-serial" "# scv-test: serial
+$leak"
+  mk "$D" "d-clean" "echo ok"
+  out="$(run "$BASH_BIN" --dir "$D" --jobs 2)"; rc=$?
+  made="$(wc -l < "$P14" | tr -d ' ')"; alive=0
+  for p in $(cat "$P14"); do kill -0 "$p" 2>/dev/null && alive=$((alive + 1)); done
+  [[ "$made" == 6 && "$alive" == 0 ]] \
+    && ok "T14 가짜 시험 셋이 남긴 프로그램 6개가 실행기가 끝난 뒤 0개" || fail "T14 남긴 것 $made 개 중 $alive 개가 살아 있다"
+  [[ $rc -ne 0 && "$out" == *"pass=3 fail=1"* ]] && grep -q 'FAIL .*test-b-leaky-fails.sh' <<<"$out" \
+    && ok "T14 뒷정리를 해도 시험의 종료 코드는 그대로 (통과 3 · 실패 1)" || fail "T14 rc=$rc: $out"
+  [[ "$out" == *"시험이 끝난 뒤 남은 프로그램"*"개를 끝냈다"* ]] \
+    && ok "T14 끝낸 것이 있으면 그 시험의 로그에 한 줄이 남는다" || fail "T14 로그에 한 줄 없음: $out"
+  for p in $(cat "$P14"); do kill "$p" 2>/dev/null; done   # 실패했을 때 이 시험이 남기지 않게
 done
 
 # T6 — classify · summarize 는 순수: 같은 입력 → 같은 출력, 파일을 만들지 않는다
@@ -131,8 +154,14 @@ mk "$D" "plain" 'echo ok'
   && ok "T13 재는 명령을 돌리는데 표시가 없는 시험만 잡는다 (test-measures.sh)" || fail "T13 가짜 폴더: [$(serial_missing "$D" | tr '\n' ' ')]"
 miss="$(serial_missing "$HERE")"
 [[ -z "$miss" ]] && ok "T13 이 폴더의 재는 시험은 모두 표시가 있다" || fail "T13 표시가 빠진 시험: $(printf '%s' "$miss" | tr '\n' ' ')"
-n_marked="$(for f in "$HERE"/test-pure-bench.sh "$HERE"/test-pipe-arrange.sh "$HERE"/test-slow-pure-functions.sh; do [[ -f "$f" ]] && head -n 30 "$f" | grep -Ec '^# scv-test: serial([[:space:]]|$)'; done | awk '{ s += $1 } END { print s + 0 }')"
-[[ "$n_marked" == 3 ]] && ok "T13 재는 시험 셋(재는 명령 · 엮음 고르기 · 느린 함수)에 표시가 있다" || fail "T13 표시가 있는 재는 시험: $n_marked / 3"
+n_marked="$(for f in "$HERE"/test-pure-bench-a.sh "$HERE"/test-pure-bench-b.sh "$HERE"/test-pure-bench-c.sh "$HERE"/test-pure-bench-d.sh "$HERE"/test-pipe-arrange.sh "$HERE"/test-slow-pure-functions.sh "$HERE"/test-turn-plan-check.sh; do [[ -f "$f" ]] && head -n 30 "$f" | grep -Ec '^# scv-test: serial([[:space:]]|$)'; done | awk '{ s += $1 } END { print s + 0 }')"
+[[ "$n_marked" == 7 ]] && ok "T13 재는 시험 일곱(재는 명령 넷 · 엮음 고르기 · 느린 함수 · 턴 끝 검사)에 표시가 있다" || fail "T13 표시가 있는 재는 시험: $n_marked / 7"
+# 재는 명령 시험은 넷으로 나뉘었다 — 옛 이름은 넷을 차례로 부르는 묶음이고, 실행기가 모으는 목록에는 넷만 있다
+head -n 30 "$HERE/test-pure-bench.sh" | grep -Eq '^# scv-test: aggregate([[:space:]]|$)' \
+  && ok "T13 옛 이름(test-pure-bench.sh)은 묶음 표시가 있다" || fail "T13 test-pure-bench.sh 에 묶음 표시가 없다 — 넷이 두 번 돈다"
+listed="$(pure rf_list_tests "D:$HERE" | cut -f1 | sed 's#.*/##' | grep '^test-pure-bench' | tr '\n' ' ')"
+[[ "$listed" == "test-pure-bench-a.sh test-pure-bench-b.sh test-pure-bench-c.sh test-pure-bench-d.sh " ]] \
+  && ok "T13 실행기가 모으는 것은 넷뿐이다(묶음은 건너뜀)" || fail "T13 모은 것: [$listed]"
 
 echo "test-run-focused: PASS=$PASS FAIL=$FAIL"
 (( FAIL == 0 ))
