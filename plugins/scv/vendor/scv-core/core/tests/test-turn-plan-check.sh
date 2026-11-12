@@ -7,6 +7,10 @@ scv='$scv'
 # 가짜 기록 여섯 가지 막힘(C · H · H2 · H3 · J · B2) · 엉터리 내용은 통과하되 원문이 붙음(K) ·
 # 이번 턴 것만(D · D2 · E · F) · scv/ 밖 문서 · git 아닌 폴더 · 작업 공간의 다른 저장소 · 릴리스 예외 ·
 # 2번 막히면 통과 + 기록 없음 · 선택 답 기록 · 끄기. T13(네 세션 다시 세기)은 로컬 기록이라 측정 단계, T14 는 scv-mods.
+#
+# T8(사진 0.3초 안) · T12(선택 답 2초 안)가 벽시계 한도를 본다 — 겹쳐 돌면 흔들린다(2026-11-12, 붐빌 때 두 번 실패).
+# 다른 시험이 다 끝난 뒤 혼자 돈다:
+# scv-test: serial
 set -uo pipefail
 
 CORE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -305,6 +309,124 @@ start; ed
 v="$(verdict)"
 if [[ "$v" == block ]]; then ok "T33 예전에 보관된 계획만 있고 기록 없음 → block"
 else bad "T33 v=$v"; fi
+reset
+
+# T34 — 기록 명령을 실제로 돌렸으면 명령 글의 모양과 상관없이 영수증이 남는다 (계획 20261112-wookiya1364-small-fixes-bundle T4)
+#   2026-11-12 재현: 모델은 기록 명령을 "경로를 변수에 담아" · "다른 명령 뒤에 이어서" · "둘째 줄에서" 돌린다.
+#   도구 앞 훅은 명령 글의 첫 줄이 정해진 꼴일 때만 영수증을 남겨, 기록 줄이 계획에 있는데도 턴이 막혔다
+#   (그 세션의 상태 파일: 기록 명령 네 번 · 영수증 0). 기록 명령 스스로가 기록을 남긴 뒤 영수증을 더한다.
+n34=0
+reset; start; ed; H "P='$CORE/scripts'; bash \"\$P/plan-link.sh\" progress p1 --step 2 --note '변수에 담은 경로'"
+v="$(verdict)"; [[ "$v" == pass ]] && n34=$((n34 + 1)) || echo "  (T34 변수 경로: $v)" >&2
+reset; start; ed; H "cd '$R' && git status --short >/dev/null; SL=p1; bash '$PL' progress \"\$SL\" --step 2 --note '다른 명령 뒤'"
+v="$(verdict)"; [[ "$v" == pass ]] && n34=$((n34 + 1)) || echo "  (T34 다른 명령 뒤: $v)" >&2
+reset; start; ed; H "echo 먼저
+bash '$PL' progress p1 --step 2 --note '둘째 줄'"
+v="$(verdict)"; [[ "$v" == pass ]] && n34=$((n34 + 1)) || echo "  (T34 둘째 줄: $v)" >&2
+[[ $n34 == 3 ]] && ok "T34 기록 명령을 실제로 돌린 턴 3/3 pass (변수 경로 · 다른 명령 뒤 · 둘째 줄)" || bad "T34 $n34/3"
+# 실패한 기록 명령은 영수증을 남기지 않는다 — 없는 계획에 적으려 한 턴은 그대로 막힌다
+reset; start; ed; H "P='$CORE/scripts'; bash \"\$P/plan-link.sh\" progress no-such --step 1 --note x"
+v="$(verdict)"; [[ "$v" == block ]] && ok "T34 실패한 기록 명령은 영수증이 아니다 → block" || bad "T34 실패한 명령 v=$v"
+reset
+
+# T35 — 파일을 붙여 보낸 요청: 첨부 파일의 경로는 계획 기록에 적히지 않는다 (같은 계획 T5)
+#   2026-11-12: 보관된 계획 둘의 "요청:" 줄에 내 컴퓨터의 경로가 그대로 남아 손으로 지웠다.
+att='@"/Users/x/uploads/s1/shot@2x.png" 이 화면처럼 방패 옵션을 고쳐줘'
+reset; start "$att"; ed
+H "bash $PL progress p1 --step 2 --note '방패 옵션 고침'"
+v="$(verdict)"; id="$(tid)"
+if [[ "$v" == pass ]] && plan | grep -q "요청: \[첨부\] 이 화면처럼 방패 옵션을 고쳐줘 (요청 $id)" \
+   && ! plan | grep -q '/Users/x' && ! grep -q '/Users/x' scv/journal/.turn-plan/req; then ok "T35 첨부 경로는 계획 기록 · 턴 상태에 없다, 나머지 글은 그대로"
+else bad "T35 v=$v"; plan | tail -3 >&2; fi
+# 첨부가 없는 요청은 한 글자도 바뀌지 않는다
+reset; start "방패 옵션 바꿔라 — 메일은 a@b.com"; ed
+[[ "$(cat scv/journal/.turn-plan/req)" == "방패 옵션 바꿔라 — 메일은 a@b.com" ]] && ok "T35 첨부 없는 요청은 그대로" || bad "T35 그대로가 아님: $(cat scv/journal/.turn-plan/req)"
+# 순수 함수 — 닫는 따옴표가 없으면 경로가 아니다, 맨 꼴은 빈칸 뒤에서만
+t35="$(scv_tc_strip_attach '안 닫힘 @"/a/b 그리고 x@/y'; printf '|'; scv_tc_strip_attach $'줄\n@/a/b.png\n끝')"
+[[ "$t35" == $'안 닫힘 @"/a/b 그리고 x@/y|줄\n[첨부]\n끝' ]] && ok "T35 순수 함수: 안 닫힌 따옴표 · 메일 꼴은 그대로, 줄 사이의 맨 꼴은 지움" || bad "T35 순수 함수: [$t35]"
+reset
+
+# ── 턴 도중에 온 말은 같은 턴으로 이어 간다 (계획 20261112-wookiya1364-turn-continues-mid-message) ──
+# 사람의 말마다 턴을 새로 시작하면, 일하는 도중에 온 말 뒤에는 그 앞의 기록 · 영수증이 '앞 턴 것'이 되어 같은 일에
+# 기록을 한 번 더 요구했다. 턴이 끝났다는 표시(턴 끝이 통과를 냄 · 세션을 새로 열거나 다시 엶)가 없으면 이어 간다.
+SS_HOOK="$CORE/template/hooks/on-session-start.sh"
+REQF="scv/journal/.turn-plan/req"
+
+# T36 — 일하는 도중에 온 말: 요청 번호 · 영수증이 그대로라 앞의 기록으로 통과, 요청 글에는 두 말이 모두 남는다
+reset; start "방패 옵션 바꿔라"; ed
+H "bash $PL progress p1 --step 1 --note '방패 옵션 글 바꿈'"
+id1="$(tid)"
+start "아 그리고 설명도 고쳐"
+W README.md; printf 'more\n' >> README.md
+v="$(verdict)"; id2="$(tid)"
+if [[ "$v" == pass && -n "$id1" && "$id1" == "$id2" && "$(cat "$REQF")" == $'방패 옵션 바꿔라\n(도중에 온 말) 아 그리고 설명도 고쳐' ]]; then ok "T36 도중에 온 말 → 같은 턴(번호 그대로), 앞의 기록으로 pass, 요청 글에 두 말"
+else bad "T36 v=$v id1=$id1 id2=$id2 req=$(cat "$REQF" 2>/dev/null | tr '\n' '|')"; fi
+
+# T37 — 계획을 보관한 뒤 온 말: 그 턴에 보관한 계획을 계속 읽는다 → 예외를 적지 않아도 통과
+reset; start "마무리해"; ed
+H "bash $PL progress p1 --step 2 --state done --note '체력 숫자를 87로 고침'"
+sleep 1
+mkdir -p scv/archive && mv scv/promote/p1 scv/archive/p1 && printf '보관: 시험 통과\n' > scv/archive/p1/ARCHIVED_AT.md
+start "변경 기록도 써 줘"
+W CHANGELOG.md; printf 'x\n' > CHANGELOG.md
+v="$(verdict)"
+if [[ "$v" == pass && ! -s scv/journal/.turn-plan/exempt ]]; then ok "T37 보관한 뒤 온 말 → 예외 없이 pass"
+else bad "T37 v=$v exempt=$(cat scv/journal/.turn-plan/exempt 2>/dev/null)"; fi
+
+# T38 — 끝난 턴 뒤의 말: 지금처럼 새로 시작한다 → 지난 턴의 기록은 세지 않는다, 번호가 바뀌고 요청 글은 새 말뿐
+reset; start "첫 요청"; ed
+H "bash $PL progress p1 --step 1 --note '첫 일'"
+v1="$(verdict)"; id1="$(tid)"
+start "둘째 요청"
+W README.md; printf 'more\n' >> README.md
+v2="$(verdict)"; id2="$(tid)"
+if [[ "$v1 $v2" == "pass block" && "$id1" != "$id2" && "$(cat "$REQF")" == "둘째 요청" ]]; then ok "T38 끝난 턴 뒤의 말 → 새 턴(번호 바뀜), 지난 기록은 세지 않아 block"
+else bad "T38 v1=$v1 v2=$v2 id1=$id1 id2=$id2 req=$(cat "$REQF" 2>/dev/null | tr '\n' '|')"; fi
+
+# T39 — 사용자가 멈춘 턴 뒤의 말: 멈추기 전에 고친 파일도 이번 턴 끝에 센다. 되돌렸으면 셀 것이 없다
+reset; start "전사 체력 고쳐"; ed
+start "그만, 다른 것부터"
+out="$(bash "$TC" end --session s1)"
+reset; start "전사 체력 고쳐"; ed
+git checkout -q -- src/a.ts
+start "그만, 그건 버려"
+vR="$(verdict)"
+if grep -qx 'TURN_PLAN: block' <<<"$out" && grep -q '^TURN_PLAN_FILES: .*src/a.ts' <<<"$out" && [[ "$vR" == pass ]]; then ok "T39 멈춘 턴 뒤의 말 → 멈추기 전에 고친 파일로 block, 되돌렸으면 pass"
+else bad "T39 vR=$vR out=$out"; fi
+
+# T40 — 막혔다가 이어지는 턴에 온 말: 막힌 횟수가 이어진다 (새로 세면 끝없이 막을 수 있다)
+reset; start; ed
+v1="$(verdict)"
+start "빨리 해"
+v2="$(verdict)"; v3="$(verdict)"
+[[ "$v1 $v2 $v3" == "block block pass-unrecorded" ]] && ok "T40 막힌 뒤 온 말 → 막힌 횟수 이어짐 (block · block · pass-unrecorded)" || bad "T40 $v1 $v2 $v3"
+
+# T41 — 세션을 다시 열면 앞 턴은 끝난 것: 다음 말은 새 턴. 압축은 턴 도중이라 이어 간다
+#   세션 시작 훅을 실제로 부른다(이 저장소의 훅 · 이 코어).
+ss() { printf '{"source":"%s","session_id":"s1"}' "$1" | SCV_CORE_ROOT="$CORE" bash "$SS_HOOK" >/dev/null 2>&1; }
+reset; start "첫 요청"; ed
+H "bash $PL progress p1 --step 1 --note '첫 일'"
+ss resume
+start "다시 열고 온 말"
+W README.md; printf 'more\n' >> README.md
+vRes="$(verdict)"
+reset; start "첫 요청"; ed
+H "bash $PL progress p1 --step 1 --note '첫 일'"
+ss compact
+start "압축 뒤에 온 말"
+W README.md; printf 'more\n' >> README.md
+vCom="$(verdict)"
+[[ "$vRes $vCom" == "block pass" ]] && ok "T41 다시 연 세션의 말 → 새 턴(block), 압축 뒤의 말 → 같은 턴(pass)" || bad "T41 resume=$vRes compact=$vCom"
+
+# T42 — 순수 함수: 시작 방식 · 요청 글 잇기 · 세션 열기의 종류
+t42="$(scv_tc_start_mode 1 0)|$(scv_tc_start_mode 1 1)|$(scv_tc_start_mode 0 0)|$(scv_tc_start_mode 0 1)|$(scv_tc_start_mode)"
+[[ "$t42" == "continue|fresh|fresh|fresh|fresh" ]] && ok "T42 시작 방식: 번호가 있고 끝 표시가 없을 때만 이어 감" || bad "T42 방식 [$t42]"
+long="$(printf 'a%.0s' $(seq 1 3990))"
+j="$(scv_tc_req_join "$long" "0123456789abcdefghij" 4000)"
+[[ "$(scv_tc_req_join "" "새 말" 4000)" == "새 말" && "$(scv_tc_req_join "앞 말" "" 4000)" == "앞 말" && ${#j} -eq 4000 && "$j" == "$long"* ]] \
+  && ok "T42 요청 글 잇기: 빈 쪽은 그대로, 4,000자에서 자름" || bad "T42 잇기 len=${#j}"
+t42="$(scv_tc_session_closes startup)$(scv_tc_session_closes resume)$(scv_tc_session_closes compact)$(scv_tc_session_closes clear)$(scv_tc_session_closes "")"
+[[ "$t42" == "11000" ]] && ok "T42 세션 열기: 새로 열기 · 다시 열기만 앞 턴을 끝냄" || bad "T42 세션 [$t42]"
 reset
 
 if [[ $fail -ne 0 ]]; then echo "test-turn-plan-check: FAIL" >&2; exit 1; fi
