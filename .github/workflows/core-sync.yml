@@ -84,7 +84,7 @@ jobs:
         run: |
           bash tools/vendor-core.sh --tag "${{ steps.release.outputs.tag }}"
 
-      - name: Verify core, adapter, plugin, and common behavior
+      - name: Verify the vendored files (the PR checks run the tests)
         if: steps.release.outputs.needed == 'true'
         run: |
           bash tools/verify-core.sh
@@ -100,19 +100,9 @@ jobs:
               "release vendoring must retain the verified tarball SHA-256"
           )
           PY
-          bash plugins/scv/tests/test-codex-plugin.sh
-          bash plugins/scv/tests/test-channel-engine.sh
-          bash plugins/scv/tests/test-shared-core-adapter.sh
-          bash plugins/scv/tests/test-apply-model-policy.sh
-          bash plugins/scv/tests/test-vendor-core.sh
-          bash plugins/scv/tests/test-vendor-core-atomicity.sh
-          bash plugins/scv/vendor/scv-core/core/tests/run-dry.sh
-          isolated_root="$(mktemp -d)"
-          trap 'rm -rf "$isolated_root"' EXIT
-          cp -R -p \
-            plugins/scv/vendor/scv-core/core \
-            "$isolated_root/core"
-          (cd "$isolated_root" && bash core/tests/run-focused.sh --dir core/tests)
+          # File checks only. The test suites run once, in the PR's own checks (plugin-ci.yml):
+          # running them here too cost 13–18 minutes before the PR even opened (2026-11-13).
+          # A Core that breaks a test still cannot merge — the PR opens with a failed check.
           while IFS= read -r -d '' script; do
             bash -n "$script"
           done < <(

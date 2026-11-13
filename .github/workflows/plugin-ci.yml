@@ -48,6 +48,7 @@ jobs:
           bash plugins/scv/tests/test-codex-plugin.sh
           bash plugins/scv/tests/test-channel-engine.sh
           bash plugins/scv/tests/test-guard-registration.sh
+          bash plugins/scv/tests/test-ci-shards.sh
 
       - name: Check Bash syntax
         run: |
@@ -90,7 +91,6 @@ jobs:
           bash plugins/scv/tests/test-shared-core-adapter.sh
           bash plugins/scv/tests/test-apply-model-policy.sh
           bash plugins/scv/tests/test-vendor-core.sh
-          bash plugins/scv/tests/test-vendor-core-atomicity.sh
 
       - name: Check prompting guides
         run: bash plugins/scv/prompting/check.sh
@@ -101,17 +101,57 @@ jobs:
       - name: README check (vendored Core tool)
         run: bash plugins/scv/vendor/scv-core/tools/check-readme.sh --profile codex .
 
-  core:
-    name: Vendored SCV Core regressions
+  # The vendor atomicity test is the longest wrapper test by far (2026-11-13: 395 s on macOS,
+  # 240 s on Linux, of the adapter job's 441 s and 262 s). Its five sections are independent,
+  # so it runs as three parts on three runners per OS. macOS jobs stay at four in this workflow
+  # (adapter + three parts) — the account runs at most five macOS jobs at once.
+  # tests/test-ci-shards.sh keeps the part count here and the parts in the test in step.
+  atomicity:
+    name: Vendor atomicity (${{ matrix.os }} ${{ matrix.part }}/3)
     needs: validate
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        part: [1, 2, 3]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install modern Bash on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew list bash >/dev/null 2>&1 || brew install bash
+          modern_bash="$(brew --prefix)/bin/bash"
+          "$modern_bash" -c 'test "${BASH_VERSINFO[0]}" -ge 4'
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+
+      - name: Run the vendor atomicity test (this part)
+        run: bash plugins/scv/tests/test-vendor-core-atomicity.sh --part ${{ matrix.part }}/3
+
+  # Every vendored Core test used to run on one runner (2026-11-13: 695 s). Core's own runner
+  # cuts the list into shards balanced by core/tests/timings.tsv; each shard runs its tests one
+  # at a time on its own runner, as Core's CI does. Eight shards: the table's core/tests rows
+  # sum to 1,167 s, about 145 s a shard, and the longest single test is 127 s.
+  # tests/test-ci-shards.sh keeps the three places that name the count in step.
+  core:
+    name: Vendored SCV Core regressions (${{ matrix.shard }}/8)
+    needs: validate
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
       - name: Run shared dry-run regression
+        if: matrix.shard == 1
         run: bash plugins/scv/vendor/scv-core/core/tests/run-dry.sh
 
-      - name: Run shared focused shell tests
+      - name: Run shared focused shell tests (this shard)
         run: |
           set -euo pipefail
           isolated_root="$(mktemp -d)"
@@ -119,8 +159,12 @@ jobs:
           cp -R -p \
             plugins/scv/vendor/scv-core/core \
             "$isolated_root/core"
-          # run-focused: 실패한 시험의 로그 전문을 찍고, 속도 검사는 끝에 혼자 돈다
-          (cd "$isolated_root" && bash core/tests/run-focused.sh --dir core/tests)
+          # run-focused: 실패한 시험의 로그 전문을 찍고, 조각 안에서는 시험이 하나씩 돈다
+          (cd "$isolated_root" && bash core/tests/run-focused.sh --dir core/tests --shard ${{ matrix.shard }}/8)
+
+      - name: Validate the vendored tree
+        if: matrix.shard == 1
+        run: |
           python3 tools/validate-core-tree.py \
             --root plugins/scv/vendor/scv-core
           bash tools/verify-core.sh
