@@ -89,10 +89,7 @@ wait_for_file() {
   [[ -e "$path" ]]
 }
 
-WORK="$(mktemp -d)"
-WORK="$(cd "$WORK" && pwd -P)"
-trap 'rm -rf "$WORK"' EXIT
-
+section_1() {
 echo "── target authority and immutable-tree validation ──"
 
 case_root="$WORK/custom-authority"
@@ -206,8 +203,9 @@ if [[ "$before" == "$after" ]]; then
 else
   fail "cache-overlap rejection changed the vendor"
 fi
+}
 
-echo
+section_2() {
 echo "── additive Deck runtime migration ──"
 
 case_root="$WORK/runtime-migration"
@@ -420,8 +418,9 @@ if [[ "$rc" -ne 0 && "$before" == "$after" ]] &&
 else
   fail "migration/rollback safety state is not source-exact plus additive cache"
 fi
+}
 
-echo
+section_3() {
 echo "── rollback on failures and catchable signals ──"
 
 failure_number=0
@@ -476,8 +475,9 @@ for cleanup_signal in HUP INT TERM; do
     fail "$cleanup_signal interrupted committed backup cleanup"
   fi
 done
+}
 
-echo
+section_4() {
 echo "── lock and orphan recovery ──"
 
 case_root="$WORK/lock-create-symlink-race"
@@ -825,8 +825,9 @@ if [[ "$rc" -ne 0 && -n "$backup" ]] &&
 else
   fail "rollback collision hid failure or lost its backup"
 fi
+}
 
-echo
+section_5() {
 echo "── late filesystem races ──"
 
 case_root="$WORK/late-target-symlink"
@@ -1102,6 +1103,63 @@ if wait_for_file "$ready"; then
 else
   fail "late parent-symlink test never reached the commit pause"
 fi
+}
+
+# ---------------------------------------------------------------------------
+# Which sections run. The five sections are independent — each case builds its own
+# tree under $WORK — so CI runs them as three parts on three runners at once
+# (2026-11-13: the whole file took 395 s on the macOS runner and 240 s on Linux).
+# The parts are balanced by measured time (local macOS: sections 4 · 59 · 104 · 60 · 72 s
+# → parts 76 · 119 · 104 s). No argument runs everything, as before.
+#   --part I/N        run part I of the N parts defined below
+#   --list-parts      print "part<TAB>sections" for every part
+#   --list-sections   print "number<TAB>title" for every section
+# tests/test-ci-shards.sh checks that the parts cover every section exactly once and
+# that the workflow asks for the same number of parts.
+SECTION_COUNT=5
+PARTS=("1 5" "2 4" "3")
+SECTION_TITLES=(
+  "target authority and immutable-tree validation"
+  "additive Deck runtime migration"
+  "rollback on failures and catchable signals"
+  "lock and orphan recovery"
+  "late filesystem races"
+)
+
+usage() {
+  echo "usage: test-vendor-core-atomicity.sh [--part I/${#PARTS[@]} | --list-parts | --list-sections]" >&2
+  exit 2
+}
+
+SELECTED=""
+case "${1:-}" in
+  "")
+    [[ $# -eq 0 ]] || usage
+    i=1; while [[ "$i" -le "$SECTION_COUNT" ]]; do SELECTED="$SELECTED $i"; i=$((i + 1)); done ;;
+  --list-parts)
+    i=0; while [[ "$i" -lt "${#PARTS[@]}" ]]; do printf '%s\t%s\n' "$((i + 1))" "${PARTS[$i]}"; i=$((i + 1)); done
+    exit 0 ;;
+  --list-sections)
+    i=0; while [[ "$i" -lt "$SECTION_COUNT" ]]; do printf '%s\t%s\n' "$((i + 1))" "${SECTION_TITLES[$i]}"; i=$((i + 1)); done
+    exit 0 ;;
+  --part)
+    [[ $# -eq 2 && "$2" =~ ^([0-9]+)/([0-9]+)$ ]] || usage
+    [[ "${BASH_REMATCH[2]}" -eq "${#PARTS[@]}" && "${BASH_REMATCH[1]}" -ge 1 && "${BASH_REMATCH[1]}" -le "${#PARTS[@]}" ]] || usage
+    SELECTED="${PARTS[$((BASH_REMATCH[1] - 1))]}"
+    echo "── part $2: sections$(printf ' %s' $SELECTED) ──" ;;
+  *) usage ;;
+esac
+
+WORK="$(mktemp -d)"
+WORK="$(cd "$WORK" && pwd -P)"
+trap 'rm -rf "$WORK"' EXIT
+
+first=1
+for section in $SELECTED; do
+  [[ "$first" -eq 1 ]] || echo
+  first=0
+  "section_$section"
+done
 
 echo
 echo "── result: $PASS passed, $FAIL failed ──"
