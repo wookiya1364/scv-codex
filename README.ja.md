@@ -158,6 +158,7 @@ bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # プロセスの�
 | `$scv:sync` | テンプレート更新 + ドリフト検知 |
 | `$scv:routine <name>` | 1 ファイルのメンテナンスルーチン |
 | `$scv:dreams` | 過去のセッションを振り返り、より良いプロンプトを助言 |
+| `$scv:ask-mode` | 最初と最後だけ尋ねる ↔ 毎回尋ねる |
 | `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | デスクトップアプリ専用プラグイン — Codex は一行で案内 |
 | `$scv:channel` | 開発 · ステージング · 本番を切替 — リリース前に新作業を確認 |
 | `$scv:workspace` · `$scv:handoff` | マルチレポのアンブレラ · 他リポジトリ作業の宣言 |
