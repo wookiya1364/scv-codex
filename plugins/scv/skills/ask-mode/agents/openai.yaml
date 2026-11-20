@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Ask Mode"
+  short_description: "Ask only at the start and the end, or everywhere"
+  default_prompt: "Use $scv:ask-mode to switch when SCV asks me."
+
+policy:
+  allow_implicit_invocation: true
