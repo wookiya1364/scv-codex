@@ -162,6 +162,7 @@ Conversation routes for you; the explicit selectors:
 | `$scv:routine <name>` | One-file maintenance routines |
 | `$scv:dreams` | Look back at past sessions · coach better prompts |
 | `$scv:ask-mode` | Ask only at the start and the end, or everywhere |
+| `$scv:catalog-source` | No comments in code — the catalog is the source |
 | `$scv:mods` · `$scv:mods-install` · `$scv:mods-remove` | Desktop-app plugins only — Codex says so in one line |
 | `$scv:channel` | Swap dev · stage · prod — try new work before a release |
 | `$scv:workspace` · `$scv:handoff` | Multi-repo umbrella · cross-repo declaration |
