@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Catalog Source"
+  short_description: "No comments in code — the catalog is the source"
+  default_prompt: "Use $scv:catalog-source to switch the no-comments mode."
+
+policy:
+  allow_implicit_invocation: true
