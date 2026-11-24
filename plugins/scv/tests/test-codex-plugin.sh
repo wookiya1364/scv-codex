@@ -18,6 +18,7 @@ EXPECTED_SKILLS=(
   codegen
   deck
   dreams
+  gear
   handoff
   help
   install-deps
@@ -215,7 +216,7 @@ mapfile -t actual_skills < <(
     | sort
 )
 if [[ "${actual_skills[*]}" == "${EXPECTED_SKILLS[*]}" ]]; then
-  ok "skill set exactly matches the 22 core actions"
+  ok "skill set exactly matches the 23 core actions"
 else
   fail "skill set mismatch: ${actual_skills[*]}"
 fi
@@ -269,7 +270,7 @@ plugin = Path(sys.argv[2])
 actions = actions_doc.get("actions", actions_doc)
 if isinstance(actions, dict):
     actions = [{"id": key, **value} for key, value in actions.items()]
-assert len(actions) == 22
+assert len(actions) == 23
 catalog = {item["id"]: item for item in actions}
 assert set(catalog) == {path.name for path in (plugin / "skills").iterdir() if path.is_dir()}
 for name, action in catalog.items():
