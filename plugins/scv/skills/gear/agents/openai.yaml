@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Gear"
+  short_description: "Run or make gears — reusable work units in scv/gears/"
+  default_prompt: "Use $scv:gear to list, run or make a gear."
+
+policy:
+  allow_implicit_invocation: true
