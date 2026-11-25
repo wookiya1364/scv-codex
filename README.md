@@ -160,7 +160,6 @@ Conversation routes for you; the explicit selectors:
 | `$scv:report` | Phase result to Slack/Discord |
 | `$scv:sync` | Refresh templates + drift detection |
 | `$scv:routine <name>` | One-file maintenance routines |
-| `$scv:dreams` | Look back at past sessions · coach better prompts |
 | `$scv:ask-mode` | Ask only at the start and the end, or everywhere |
 | `$scv:catalog-source` | No comments in code — the catalog is the source |
 | `$scv:gear` | Run or make gears — reusable work units in `scv/gears/` |
