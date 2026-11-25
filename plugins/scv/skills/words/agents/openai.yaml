@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCV Words"
+  short_description: "Word dictionary — say B instead of A, inflections included"
+  default_prompt: "Use $scv:words to show or change the word dictionary."
+
+policy:
+  allow_implicit_invocation: true
