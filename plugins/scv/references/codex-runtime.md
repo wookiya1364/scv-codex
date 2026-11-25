@@ -73,6 +73,12 @@ help first): in a person's turn a shell or patch call is refused until help has
 been called. The help call itself is a shell call that runs the vendored
 `help.sh`, so it passes and marks the turn.
 
+Since Core 0.104.0 the same `gate-any` entry on the shell matcher also refuses a
+shell command that waits in the foreground (Rule W — a `sleep` of 30 seconds or
+more, or an `until`/`while` loop that sleeps). No extra registration: this host
+has no long-wait tool field to name, so `SCV_WAIT_FIELD` and
+`SCV_BACKGROUND_FIELD` stay unset. Off: project setting `SCV_BACKGROUND_FIRST=off`.
+
 `hooks/hooks.json` gives the hook two directories to watch — the vendored
 `$SCV_CORE_ROOT/scripts` AND `$SCV_PLUGIN_ROOT/adapter/scripts`, colon-separated
 (Core 0.28.0 taught `SCV_GUARD_SCRIPTS` to take a list) — and the hook looks for
