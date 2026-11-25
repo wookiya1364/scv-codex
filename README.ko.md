@@ -154,7 +154,6 @@ bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # 과정 숫자
 | `$scv:report` | 페이즈 결과를 Slack/Discord로 |
 | `$scv:sync` | 템플릿 갱신 + 드리프트 감지 |
 | `$scv:routine <name>` | 파일 하나짜리 유지보수 루틴 |
-| `$scv:dreams` | 지난 세션을 돌아보며 더 좋은 프롬프트 코칭 |
 | `$scv:ask-mode` | 처음과 끝에만 묻기 ↔ 매번 묻기 |
 | `$scv:catalog-source` | 코드 주석 없이 순수 함수 사전이 원본 |
 | `$scv:gear` | 기어 실행 · 만들기 — `scv/gears/` 의 재사용 작업 단위 |

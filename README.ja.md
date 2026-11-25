@@ -157,7 +157,6 @@ bash plugins/scv/vendor/scv-core/core/scripts/metrics.sh      # プロセスの�
 | `$scv:report` | フェーズ結果を Slack/Discord へ |
 | `$scv:sync` | テンプレート更新 + ドリフト検知 |
 | `$scv:routine <name>` | 1 ファイルのメンテナンスルーチン |
-| `$scv:dreams` | 過去のセッションを振り返り、より良いプロンプトを助言 |
 | `$scv:ask-mode` | 最初と最後だけ尋ねる ↔ 毎回尋ねる |
 | `$scv:catalog-source` | コードにコメントを置かず純粋関数辞書を原本に |
 | `$scv:gear` | ギアの実行・作成 — `scv/gears/` の再利用できる作業単位 |
